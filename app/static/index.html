@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.2.3</title>
+    <title>Project GIGDIS alpha0.2.4</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -20,6 +20,7 @@
       .logo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; background: radial-gradient(circle at 30% 30%, #22d3ee 0%, #2563eb 45%, #1e1b4b 100%); box-shadow: 0 0 16px rgba(34, 211, 238, 0.3); }
       .meta { color: var(--meta-text); font-size: 12px; }
       .layout { display: grid; grid-template-columns: minmax(320px, 2fr) minmax(320px, 1fr); gap: 12px; padding: 12px; height: calc(100vh - 64px); }
+      .map-column { min-height: 0; display: grid; grid-template-rows: minmax(320px, 1fr) auto; gap: 10px; }
       #map { height: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--header-border); position: sticky; top: 0; }
       .sidebar { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; }
       .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; }
@@ -40,17 +41,33 @@
       .kpi .label { font-size: 11px; color: var(--meta-text); }
       .kpi .value { font-weight: 700; margin-top: 4px; }
       .tension-kpi { cursor: help; }
-      .tension-tooltip { position: absolute; z-index: 999; width: 280px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; top: 100%; left: 0; margin-top: 8px; display: none; }
+      .tension-tooltip { position: absolute; z-index: 999; width: 280px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; top: 100%; left: 0; margin-top: 8px; display: none; transform: translateX(var(--tooltip-shift, 0px)); }
       .tension-kpi:hover .tension-tooltip { display: block; }
       .tension-tooltip h4 { margin: 0 0 8px; font-size: 12px; }
       .tension-tooltip ul { margin: 0 0 8px; font-size: 12px; padding-left: 16px; }
       .tension-tooltip canvas { width: 100%; height: 90px; background: rgba(15, 23, 42, 0.85); border-radius: 6px; }
-      @media (max-width: 1100px) { body { overflow: auto; } .layout { grid-template-columns: 1fr; } #map { height: 50vh; } .sidebar { overflow: visible; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      .tiles-panel { padding: 0; overflow: hidden; }
+      .tiles-header { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--card-border); }
+      .tiles-header h3 { margin: 0; }
+      .tile-toggle { min-width: 84px; }
+      .tiles-content { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+      .tiles-panel.collapsed .tiles-content { display: none; }
+      .tiles-settings { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--meta-text); }
+      .tiles-settings label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+      .tiles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+      .info-tile { background: var(--kpi-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px; min-height: 86px; }
+      .info-tile .label { font-size: 11px; color: var(--meta-text); }
+      .info-tile .value { margin-top: 6px; font-weight: 700; font-size: 18px; }
+      .info-tile .sub { margin-top: 6px; font-size: 12px; color: var(--meta-text); }
+      .trend-up { color: #22c55e; }
+      .trend-down { color: #f97316; }
+      .trend-flat { color: #38bdf8; }
+      @media (max-width: 1100px) { body { overflow: auto; } .layout { grid-template-columns: 1fr; height: auto; } .map-column { grid-template-rows: auto auto; } #map { position: relative; height: 50vh; } .sidebar { overflow: visible; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tiles-grid { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.3</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.4</div>
       <div class="actions">
         <select id="lang-select"></select>
         <button id="toggle-theme" class="secondary"></button>
@@ -59,7 +76,19 @@
     </header>
 
     <main class="layout">
-      <div id="map"></div>
+      <div class="map-column">
+        <div id="map"></div>
+        <section id="tiles-panel" class="card tiles-panel">
+          <div class="tiles-header">
+            <h3 id="tiles-title"></h3>
+            <button id="tiles-toggle" class="secondary tile-toggle" type="button"></button>
+          </div>
+          <div class="tiles-content">
+            <div id="tiles-settings" class="tiles-settings"></div>
+            <div id="tiles-grid" class="tiles-grid"></div>
+          </div>
+        </section>
+      </div>
       <aside class="sidebar">
         <section class="card">
           <h3 id="filters-title"></h3>
@@ -95,11 +124,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       const I18N = {
-        zh: { lang: '中文', switchLight: '切换为浅色地图', switchDark: '切换为深色地图', loading: '加载中...', filters: '筛选器', clear: '清空', all: '全部', current: '当前', overview: '数据概览', countries: '国家数量', events: '新闻总数', hotness: '平均热度', tension: '全球紧张度', hotspots: '主要热点区域', trend: '每小时紧张度变化', globalTop: '全局 Top 8 热点', viewport: '当前区域热点', viewportTip: '点击地图国家圆点后自动更新（最多8条）', noData: '暂无数据', viewSource: '查看原文', lastRefresh: '上次刷新', points: '分', eventCount: '事件数', mainType: '主类型' },
-        en: { lang: 'English', switchLight: 'Switch to light map', switchDark: 'Switch to dark map', loading: 'Loading...', filters: 'Filters', clear: 'Clear', all: 'All', current: 'Current', overview: 'Overview', countries: 'Countries', events: 'Total news', hotness: 'Avg hotness', tension: 'Global tension', hotspots: 'Top hotspot regions', trend: 'Hourly tension trend', globalTop: 'Global Top 8', viewport: 'Regional highlights', viewportTip: 'Click a country marker to update (up to 8)', noData: 'No data', viewSource: 'Read source', lastRefresh: 'Last refresh', points: 'pts', eventCount: 'Events', mainType: 'Main topic' },
-        ru: { lang: 'Русский', switchLight: 'Светлая карта', switchDark: 'Тёмная карта', loading: 'Загрузка...', filters: 'Фильтры', clear: 'Очистить', all: 'Все', current: 'Текущие', overview: 'Сводка', countries: 'Страны', events: 'Новости', hotness: 'Средняя горячесть', tension: 'Глобальная напряжённость', hotspots: 'Главные регионы', trend: 'Почасовой тренд', globalTop: 'Глобальный Top 8', viewport: 'Региональные события', viewportTip: 'Нажмите маркер страны (до 8)', noData: 'Нет данных', viewSource: 'Источник', lastRefresh: 'Обновлено', points: 'балл', eventCount: 'События', mainType: 'Главная тема' },
-        fr: { lang: 'Français', switchLight: 'Carte claire', switchDark: 'Carte sombre', loading: 'Chargement...', filters: 'Filtres', clear: 'Effacer', all: 'Tout', current: 'Actifs', overview: 'Aperçu', countries: 'Pays', events: 'Actualités', hotness: 'Chaleur moy.', tension: 'Tension mondiale', hotspots: 'Régions clés', trend: 'Évolution horaire', globalTop: 'Top 8 mondial', viewport: 'Foyer régional', viewportTip: 'Cliquez un marqueur de pays (max 8)', noData: 'Aucune donnée', viewSource: 'Source', lastRefresh: 'Dernière MAJ', points: 'pts', eventCount: 'Événements', mainType: 'Sujet principal' },
-        de: { lang: 'Deutsch', switchLight: 'Helle Karte', switchDark: 'Dunkle Karte', loading: 'Lädt...', filters: 'Filter', clear: 'Leeren', all: 'Alle', current: 'Aktiv', overview: 'Übersicht', countries: 'Länder', events: 'Nachrichten', hotness: 'Ø Hotness', tension: 'Globale Spannung', hotspots: 'Top-Regionen', trend: 'Stündlicher Verlauf', globalTop: 'Globale Top 8', viewport: 'Regionale Hotspots', viewportTip: 'Landesmarker anklicken (max. 8)', noData: 'Keine Daten', viewSource: 'Quelle', lastRefresh: 'Aktualisiert', points: 'Pkt', eventCount: 'Ereignisse', mainType: 'Top-Thema' }
+        zh: { lang: '中文', switchLight: '切换为浅色地图', switchDark: '切换为深色地图', loading: '加载中...', filters: '筛选器', clear: '清空', all: '全部', current: '当前', overview: '数据概览', countries: '国家数量', events: '新闻总数', hotness: '平均热度', tension: '全球紧张度', hotspots: '主要热点区域', trend: '每小时紧张度变化', globalTop: '全局 Top 8 热点', viewport: '当前区域热点', viewportTip: '点击地图国家圆点后自动更新（最多8条）', noData: '暂无数据', viewSource: '查看原文', lastRefresh: '上次刷新', points: '分', eventCount: '事件数', mainType: '主类型', tiles: '自定义磁贴', collapse: '折叠', expand: '展开', tileDatetime: '时间日期', tileHeatTrend: '新闻平均热度变化', tileTensionTrend: '紧张度变化', tileActiveTopics: '当前主题', perHour: '每小时', comparedToPrev: '较上次刷新' },
+        en: { lang: 'English', switchLight: 'Switch to light map', switchDark: 'Switch to dark map', loading: 'Loading...', filters: 'Filters', clear: 'Clear', all: 'All', current: 'Current', overview: 'Overview', countries: 'Countries', events: 'Total news', hotness: 'Avg hotness', tension: 'Global tension', hotspots: 'Top hotspot regions', trend: 'Hourly tension trend', globalTop: 'Global Top 8', viewport: 'Regional highlights', viewportTip: 'Click a country marker to update (up to 8)', noData: 'No data', viewSource: 'Read source', lastRefresh: 'Last refresh', points: 'pts', eventCount: 'Events', mainType: 'Main topic', tiles: 'Custom tiles', collapse: 'Collapse', expand: 'Expand', tileDatetime: 'Date & time', tileHeatTrend: 'Average heat trend', tileTensionTrend: 'Tension trend', tileActiveTopics: 'Active topics', perHour: '/hour', comparedToPrev: 'vs previous refresh' },
+        ru: { lang: 'Русский', switchLight: 'Светлая карта', switchDark: 'Тёмная карта', loading: 'Загрузка...', filters: 'Фильтры', clear: 'Очистить', all: 'Все', current: 'Текущие', overview: 'Сводка', countries: 'Страны', events: 'Новости', hotness: 'Средняя горячесть', tension: 'Глобальная напряжённость', hotspots: 'Главные регионы', trend: 'Почасовой тренд', globalTop: 'Глобальный Top 8', viewport: 'Региональные события', viewportTip: 'Нажмите маркер страны (до 8)', noData: 'Нет данных', viewSource: 'Источник', lastRefresh: 'Обновлено', points: 'балл', eventCount: 'События', mainType: 'Главная тема', tiles: 'Настраиваемые плитки', collapse: 'Свернуть', expand: 'Развернуть', tileDatetime: 'Дата и время', tileHeatTrend: 'Динамика средней горячести', tileTensionTrend: 'Динамика напряжённости', tileActiveTopics: 'Активные темы', perHour: '/час', comparedToPrev: 'к прошлому обновлению' },
+        fr: { lang: 'Français', switchLight: 'Carte claire', switchDark: 'Carte sombre', loading: 'Chargement...', filters: 'Filtres', clear: 'Effacer', all: 'Tout', current: 'Actifs', overview: 'Aperçu', countries: 'Pays', events: 'Actualités', hotness: 'Chaleur moy.', tension: 'Tension mondiale', hotspots: 'Régions clés', trend: 'Évolution horaire', globalTop: 'Top 8 mondial', viewport: 'Foyer régional', viewportTip: 'Cliquez un marqueur de pays (max 8)', noData: 'Aucune donnée', viewSource: 'Source', lastRefresh: 'Dernière MAJ', points: 'pts', eventCount: 'Événements', mainType: 'Sujet principal', tiles: 'Tuiles personnalisées', collapse: 'Réduire', expand: 'Développer', tileDatetime: 'Date et heure', tileHeatTrend: 'Variation de chaleur moyenne', tileTensionTrend: 'Variation de tension', tileActiveTopics: 'Sujets actifs', perHour: '/heure', comparedToPrev: 'vs actualisation précédente' },
+        de: { lang: 'Deutsch', switchLight: 'Helle Karte', switchDark: 'Dunkle Karte', loading: 'Lädt...', filters: 'Filter', clear: 'Leeren', all: 'Alle', current: 'Aktiv', overview: 'Übersicht', countries: 'Länder', events: 'Nachrichten', hotness: 'Ø Hotness', tension: 'Globale Spannung', hotspots: 'Top-Regionen', trend: 'Stündlicher Verlauf', globalTop: 'Globale Top 8', viewport: 'Regionale Hotspots', viewportTip: 'Landesmarker anklicken (max. 8)', noData: 'Keine Daten', viewSource: 'Quelle', lastRefresh: 'Aktualisiert', points: 'Pkt', eventCount: 'Ereignisse', mainType: 'Top-Thema', tiles: 'Anpassbare Kacheln', collapse: 'Einklappen', expand: 'Ausklappen', tileDatetime: 'Datum & Uhrzeit', tileHeatTrend: 'Ø-Hotness-Verlauf', tileTensionTrend: 'Spannungs-Verlauf', tileActiveTopics: 'Aktive Themen', perHour: '/Std.', comparedToPrev: 'vs. vorherigem Refresh' }
       };
       const TOPIC_LABELS = {
         military: { zh: '军事', en: 'military', ru: 'Военные', fr: 'Militaire', de: 'Militär' },
@@ -126,6 +155,10 @@
       let selectedCountry = null;
       let activeTopics = [];
       let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+      const TILE_PREF_KEY = 'gigdis-tile-config';
+      const TILE_IDS = ['datetime', 'heatTrend', 'tensionTrend', 'activeTopics'];
+      let tileConfig = loadTileConfig();
+      let panelCollapsed = false;
       const ALL_TOPICS = ['military', 'politics', 'technology', 'science', 'disaster', 'public-health', 'diplomacy', 'economy', 'general'];
 
       function t() { return I18N[currentLang] || I18N.zh; }
@@ -173,8 +206,117 @@
         document.getElementById('global-title').textContent = t().globalTop;
         document.getElementById('viewport-title').textContent = t().viewport;
         document.getElementById('viewport-tip').textContent = t().viewportTip;
+        document.getElementById('tiles-title').textContent = t().tiles;
         document.getElementById('refresh').textContent = t().loading;
+        renderTileSettings();
+        syncTilePanelState();
         applyTheme(currentTheme);
+      }
+
+      function loadTileConfig() {
+        const defaults = { datetime: true, heatTrend: true, tensionTrend: true, activeTopics: true };
+        try {
+          const saved = JSON.parse(localStorage.getItem(TILE_PREF_KEY) || '{}');
+          TILE_IDS.forEach(id => {
+            if (typeof saved[id] === 'boolean') defaults[id] = saved[id];
+          });
+        } catch (_err) {}
+        return defaults;
+      }
+
+      function persistTileConfig() {
+        localStorage.setItem(TILE_PREF_KEY, JSON.stringify(tileConfig));
+      }
+
+      function renderTileSettings() {
+        const root = document.getElementById('tiles-settings');
+        root.innerHTML = '';
+        TILE_IDS.forEach(id => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = !!tileConfig[id];
+          input.addEventListener('change', () => {
+            tileConfig[id] = input.checked;
+            persistTileConfig();
+            renderTiles(lastSnapshot);
+          });
+          const text = document.createElement('span');
+          text.textContent = tileTitle(id);
+          label.appendChild(input);
+          label.appendChild(text);
+          root.appendChild(label);
+        });
+      }
+
+      function tileTitle(id) {
+        if (id === 'datetime') return t().tileDatetime;
+        if (id === 'heatTrend') return t().tileHeatTrend;
+        if (id === 'tensionTrend') return t().tileTensionTrend;
+        return t().tileActiveTopics;
+      }
+
+      function syncTilePanelState() {
+        const panel = document.getElementById('tiles-panel');
+        panel.classList.toggle('collapsed', panelCollapsed);
+        document.getElementById('tiles-toggle').textContent = panelCollapsed ? t().expand : t().collapse;
+      }
+
+      function trendClass(value) {
+        if (value > 0) return 'trend-up';
+        if (value < 0) return 'trend-down';
+        return 'trend-flat';
+      }
+
+      function makeTile(label, value, sub = '', valueClass = '') {
+        return `<article class="info-tile"><div class="label">${label}</div><div class="value ${valueClass}">${value}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</article>`;
+      }
+
+      function renderTiles(snapshot = null) {
+        const root = document.getElementById('tiles-grid');
+        const now = new Date();
+        const entries = [];
+        if (tileConfig.datetime) {
+          const date = now.toLocaleDateString(currentLang);
+          const time = now.toLocaleTimeString(currentLang, { hour12: false });
+          entries.push(makeTile(t().tileDatetime, `${date} ${time}`));
+        }
+        if (tileConfig.heatTrend) {
+          const delta = snapshot ? snapshot.heatDelta : 0;
+          const sign = delta > 0 ? '+' : '';
+          entries.push(makeTile(t().tileHeatTrend, `${sign}${delta.toFixed(2)} ${t().perHour}`, t().comparedToPrev, trendClass(delta)));
+        }
+        if (tileConfig.tensionTrend) {
+          const delta = snapshot ? snapshot.tensionDelta : 0;
+          const sign = delta > 0 ? '+' : '';
+          entries.push(makeTile(t().tileTensionTrend, `${sign}${delta} ${t().points}`, t().comparedToPrev, trendClass(delta)));
+        }
+        if (tileConfig.activeTopics) {
+          const text = activeTopics.length ? activeTopics.map(topicLabel).join(', ') : t().all;
+          entries.push(makeTile(t().tileActiveTopics, text));
+        }
+        root.innerHTML = entries.join('') || makeTile(t().tileActiveTopics, t().noData);
+      }
+
+      function updateTensionTooltipPosition() {
+        const kpi = document.querySelector('.tension-kpi');
+        const tooltip = document.querySelector('.tension-tooltip');
+        if (!kpi || !tooltip) return;
+        tooltip.style.setProperty('--tooltip-shift', '0px');
+        const viewportWidth = window.innerWidth;
+        const kpiRect = kpi.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const overflowRight = tooltipRect.right - viewportWidth;
+        const overflowLeft = 0 - tooltipRect.left;
+        let shift = 0;
+        if (overflowRight > 0) {
+          shift = -Math.ceil(overflowRight + 8);
+        } else if (overflowLeft > 0) {
+          shift = Math.ceil(overflowLeft + 8);
+        }
+        const maxLeftShift = -Math.max(0, tooltipRect.width - kpiRect.width + 12);
+        if (shift < maxLeftShift) shift = maxLeftShift;
+        tooltip.style.setProperty('--tooltip-shift', `${shift}px`);
       }
 
       function initFilters(force = false) {
@@ -260,6 +402,7 @@
         document.getElementById('kpi-events').textContent = String(totalEvents);
         document.getElementById('kpi-hotness').textContent = String(avgHotness);
         renderTension(tension || {});
+        updateTensionTooltipPosition();
       }
 
       function markerStyle(country, stats) {
@@ -280,6 +423,8 @@
         renderList(document.getElementById('viewport-list'), (panel.viewport_related || []).slice(0, 8));
       }
 
+      let lastSnapshot = { avgHotness: 0, tensionScore: 0, heatDelta: 0, tensionDelta: 0 };
+
       async function bootstrap() {
         const params = [];
         const tq = topicQuery(); if (tq) params.push(tq);
@@ -287,10 +432,19 @@
         const hotspots = await fetch(`/api/v1/hotspots?${params.join('&')}`).then(r => r.json());
         document.getElementById('refresh').textContent = `${t().lastRefresh}：${hotspots.last_refresh || 'N/A'}`;
         document.getElementById('active-topics').textContent = `${t().current}：${activeTopics.length ? activeTopics.map(topicLabel).join(', ') : t().all}`;
-        renderKpis(hotspots.countries || [], hotspots.global_tension || {});
+        const countries = hotspots.countries || [];
+        const tension = hotspots.global_tension || {};
+        const totalCountries = countries.length;
+        const avgHotness = totalCountries ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries) : 0;
+        const tensionScore = Number(tension.score || 0);
+        const heatDelta = avgHotness - (lastSnapshot.avgHotness || 0);
+        const tensionDelta = Math.round(tensionScore - (lastSnapshot.tensionScore || 0));
+        lastSnapshot = { avgHotness, tensionScore, heatDelta, tensionDelta };
+
+        renderKpis(countries, tension);
+        renderTiles(lastSnapshot);
 
         markers.clearLayers();
-        const countries = hotspots.countries || [];
         const hotnessValues = countries.map(c => c.avg_hotness);
         const stats = { maxEvents: Math.max(...countries.map(c => c.event_count), 1), minHotness: hotnessValues.length ? Math.min(...hotnessValues) : 0, maxHotness: hotnessValues.length ? Math.max(...hotnessValues) : 100 };
         stats.hotnessSpan = Math.max(1, stats.maxHotness - stats.minHotness);
@@ -308,10 +462,17 @@
 
       document.getElementById('toggle-theme').addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
       document.getElementById('clear-filters').addEventListener('click', async () => { clearSelectedTopics(); activeTopics = []; selectedCountry = null; await bootstrap(); });
+      document.getElementById('tiles-toggle').addEventListener('click', () => {
+        panelCollapsed = !panelCollapsed;
+        syncTilePanelState();
+      });
+      document.querySelector('.tension-kpi').addEventListener('mouseenter', updateTensionTooltipPosition);
+      window.addEventListener('resize', updateTensionTooltipPosition);
 
       setupLanguage();
       rerenderStaticText();
       initFilters();
+      renderTiles(lastSnapshot);
       bootstrap();
       setInterval(bootstrap, 15 * 60 * 1000);
     </script>
