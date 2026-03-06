@@ -20,6 +20,7 @@ class Event:
     event_id: str
     title: str
     summary: str
+    link: str
     source: str
     source_credibility: float
     published_at: datetime
@@ -117,7 +118,13 @@ def _fetch_rss_entries(url: str) -> list[dict]:
                 "{http://www.w3.org/2005/Atom}published",
             ],
         )
+        link = _find_child(item, ["link", "{http://www.w3.org/2005/Atom}link"])
+        if not link:
+            atom_link = item.find("{http://www.w3.org/2005/Atom}link")
+            if atom_link is not None:
+                link = atom_link.attrib.get("href", "").strip()
         entries.append({"title": title, "summary": summary, "published": published})
+        entries[-1]["link"] = link
 
     return entries
 
@@ -147,6 +154,7 @@ def _fallback_events() -> list[Event]:
                 event_id=_event_id(title, source + str(idx)),
                 title=title,
                 summary=title,
+                link="",
                 source=source,
                 source_credibility=credibility,
                 published_at=now,
@@ -235,6 +243,7 @@ def _inject_topic_coverage(events: list[Event]) -> list[Event]:
                     event_id=_event_id(f"{title}-{topic}-{idx}", source),
                     title=title,
                     summary=title,
+                    link="",
                     source=source,
                     source_credibility=credibility,
                     published_at=now,
@@ -281,6 +290,7 @@ def fetch_events(limit_per_source: int = 20) -> list[Event]:
                     event_id=_event_id(title, source["name"]),
                     title=title,
                     summary=summary,
+                    link=entry.get("link", ""),
                     source=source["name"],
                     source_credibility=source["credibility"],
                     published_at=published_at,
@@ -341,6 +351,7 @@ def aggregate_by_country(events: Iterable[Event]) -> list[dict]:
                 "published_at": event.published_at.isoformat(),
                 "hotness": event.hotness,
                 "topic": event.topic,
+                "link": event.link,
             }
         )
 
@@ -365,6 +376,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
             "hotness": event.hotness,
             "topic": event.topic,
             "source": event.source,
+            "link": event.link,
         }
         for event in events[:8]
     ]
@@ -378,6 +390,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
                 "hotness": event.hotness,
                 "topic": event.topic,
                 "source": event.source,
+                "link": event.link,
             }
             for event in events
             if event.country.lower() == viewport_country.lower()
