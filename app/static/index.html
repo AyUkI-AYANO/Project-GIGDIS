@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project GIGDIS alpha0.1.0</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
+      header { padding: 12px 16px; background: #1e293b; display: flex; justify-content: space-between; }
+      #map { height: 62vh; }
+      .panel { padding: 12px 16px; background: #111827; }
+      .meta { color: #93c5fd; font-size: 12px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .card { background: #1f2937; border-radius: 8px; padding: 10px; }
+      ul { margin: 8px 0 0; padding-left: 18px; }
+      li { margin-bottom: 6px; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Project GIGDIS · alpha0.1.0</strong>
+      <span id="refresh" class="meta">加载中...</span>
+    </header>
+    <div id="map"></div>
+    <section class="panel">
+      <div class="grid">
+        <div class="card">
+          <h3>全局 Top 5 热点</h3>
+          <ul id="global-list"></ul>
+        </div>
+        <div class="card">
+          <h3>当前区域相关热点</h3>
+          <p class="meta">点击任意国家圆点后自动更新</p>
+          <ul id="viewport-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const map = L.map('map').setView([25, 10], 2);
+      const markers = L.layerGroup().addTo(map);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 7,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      function renderList(el, items) {
+        el.innerHTML = '';
+        if (!items.length) {
+          el.innerHTML = '<li>暂无数据</li>';
+          return;
+        }
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.textContent = `${item.country}｜${item.topic}｜${item.hotness}分｜${item.title}`;
+          el.appendChild(li);
+        });
+      }
+
+      async function loadPanel(country = null) {
+        const query = country ? `?viewport_country=${encodeURIComponent(country)}` : '';
+        const panel = await fetch(`/api/v1/panel${query}`).then(r => r.json());
+        renderList(document.getElementById('global-list'), panel.global_top);
+        renderList(document.getElementById('viewport-list'), panel.viewport_related || []);
+      }
+
+      async function bootstrap() {
+        const hotspots = await fetch('/api/v1/hotspots').then(r => r.json());
+        document.getElementById('refresh').textContent = `上次刷新：${hotspots.last_refresh || 'N/A'}`;
+
+        markers.clearLayers();
+        hotspots.countries.forEach(country => {
+          const radius = 8 + Math.max(0, (country.avg_hotness - 40) / 4);
+          const marker = L.circleMarker([country.lat, country.lon], {
+            radius,
+            color: '#f97316',
+            fillColor: '#fb923c',
+            fillOpacity: 0.7
+          });
+          marker.bindPopup(`<b>${country.country}</b><br/>事件数: ${country.event_count}<br/>热度: ${country.avg_hotness}`);
+          marker.on('click', () => loadPanel(country.country));
+          marker.addTo(markers);
+        });
+
+        await loadPanel(null);
+      }
+
+      bootstrap();
+      setInterval(bootstrap, 15 * 60 * 1000);
+    </script>
+  </body>
+</html>
