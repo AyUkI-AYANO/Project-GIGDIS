@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.2.2</title>
+    <title>Project GIGDIS alpha0.2.3</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -11,167 +11,50 @@
       crossorigin=""
     />
     <style>
-      :root {
-        --bg: #0b1220;
-        --text: #e2e8f0;
-        --header-bg: #111b30;
-        --header-border: #22314f;
-        --card-bg: #111827;
-        --card-border: #273449;
-        --tag-bg: #1e293b;
-        --tag-border: #334155;
-        --meta-text: #93c5fd;
-        --kpi-bg: #0f172a;
-        --link-color: #7dd3fc;
-      }
-      body[data-theme='light'] {
-        --bg: #f1f5f9;
-        --text: #0f172a;
-        --header-bg: #e2e8f0;
-        --header-border: #cbd5e1;
-        --card-bg: #ffffff;
-        --card-border: #d1d5db;
-        --tag-bg: #f1f5f9;
-        --tag-border: #cbd5e1;
-        --meta-text: #334155;
-        --kpi-bg: #f8fafc;
-        --link-color: #0369a1;
-      }
+      :root { --bg: #0b1220; --text: #e2e8f0; --header-bg: #111b30; --header-border: #22314f; --card-bg: #111827; --card-border: #273449; --tag-bg: #1e293b; --tag-border: #334155; --meta-text: #93c5fd; --kpi-bg: #0f172a; --link-color: #7dd3fc; }
+      body[data-theme='light'] { --bg: #f1f5f9; --text: #0f172a; --header-bg: #e2e8f0; --header-border: #cbd5e1; --card-bg: #fff; --card-border: #d1d5db; --tag-bg: #f1f5f9; --tag-border: #cbd5e1; --meta-text: #334155; --kpi-bg: #f8fafc; --link-color: #0369a1; }
       * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: "Segoe UI", Arial, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        height: 100vh;
-        overflow: hidden;
-      }
-      header {
-        padding: 14px 20px;
-        background: var(--header-bg);
-        border-bottom: 1px solid var(--header-border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .brand {
-        font-size: 18px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .logo {
-        width: 30px;
-        height: 30px;
-        border-radius: 8px;
-        display: grid;
-        place-items: center;
-        font-size: 16px;
-        background: radial-gradient(circle at 30% 30%, #22d3ee 0%, #2563eb 45%, #1e1b4b 100%);
-        box-shadow: 0 0 16px rgba(34, 211, 238, 0.3);
-      }
+      body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+      header { padding: 14px 20px; background: var(--header-bg); border-bottom: 1px solid var(--header-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+      .brand { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+      .logo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; background: radial-gradient(circle at 30% 30%, #22d3ee 0%, #2563eb 45%, #1e1b4b 100%); box-shadow: 0 0 16px rgba(34, 211, 238, 0.3); }
       .meta { color: var(--meta-text); font-size: 12px; }
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(320px, 2fr) minmax(320px, 1fr);
-        gap: 12px;
-        padding: 12px;
-        height: calc(100vh - 64px);
-      }
-      #map {
-        height: 100%;
-        border-radius: 10px;
-        overflow: hidden;
-        border: 1px solid var(--header-border);
-        position: sticky;
-        top: 0;
-      }
-      .sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        overflow-y: auto;
-        padding-right: 4px;
-      }
-      .card {
-        background: var(--card-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 10px;
-        padding: 12px;
-      }
+      .layout { display: grid; grid-template-columns: minmax(320px, 2fr) minmax(320px, 1fr); gap: 12px; padding: 12px; height: calc(100vh - 64px); }
+      #map { height: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--header-border); position: sticky; top: 0; }
+      .sidebar { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 4px; }
+      .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; }
       .card h3 { margin: 0 0 8px; font-size: 16px; }
-      .filters {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 10px 0;
-      }
-      .filter-button {
-        background: var(--tag-bg);
-        border: 1px solid var(--tag-border);
-        color: var(--text);
-        border-radius: 999px;
-        padding: 5px 11px;
-        font-size: 12px;
-        transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
-      }
-      .filter-button:hover {
-        transform: translateY(-1px);
-      }
-      .filter-button.active {
-        border-color: #22d3ee;
-        background: linear-gradient(120deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.35));
-        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3), 0 0 14px rgba(56, 189, 248, 0.45);
-      }
-      .actions {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      button {
-        background: #0284c7;
-        border: none;
-        color: #fff;
-        border-radius: 6px;
-        padding: 6px 12px;
-        cursor: pointer;
-      }
-      button.secondary {
-        background: #334155;
-      }
+      .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+      .filter-button { background: var(--tag-bg); border: 1px solid var(--tag-border); color: var(--text); border-radius: 999px; padding: 5px 11px; font-size: 12px; }
+      .filter-button.active { border-color: #22d3ee; background: linear-gradient(120deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.35)); box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3), 0 0 14px rgba(56, 189, 248, 0.45); }
+      .actions { display: flex; gap: 8px; align-items: center; }
+      button, select { border-radius: 6px; padding: 6px 10px; }
+      button { background: #0284c7; border: none; color: #fff; cursor: pointer; }
+      button.secondary { background: #334155; }
+      select { background: var(--tag-bg); border: 1px solid var(--tag-border); color: var(--text); }
       ul { margin: 0; padding-left: 18px; }
       li { margin-bottom: 8px; line-height: 1.35; }
       li a { color: var(--link-color); margin-left: 6px; }
-      .kpis {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-      }
-      .kpi {
-        background: var(--kpi-bg);
-        border: 1px solid var(--card-border);
-        border-radius: 8px;
-        padding: 8px;
-      }
+      .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .kpi { background: var(--kpi-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px; position: relative; }
       .kpi .label { font-size: 11px; color: var(--meta-text); }
       .kpi .value { font-weight: 700; margin-top: 4px; }
-      @media (max-width: 1100px) {
-        body { overflow: auto; }
-        .layout { grid-template-columns: 1fr; }
-        #map { height: 50vh; }
-        .sidebar { overflow: visible; }
-      }
+      .tension-kpi { cursor: help; }
+      .tension-tooltip { position: absolute; z-index: 999; width: 280px; background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 10px; top: 100%; left: 0; margin-top: 8px; display: none; }
+      .tension-kpi:hover .tension-tooltip { display: block; }
+      .tension-tooltip h4 { margin: 0 0 8px; font-size: 12px; }
+      .tension-tooltip ul { margin: 0 0 8px; font-size: 12px; padding-left: 16px; }
+      .tension-tooltip canvas { width: 100%; height: 90px; background: rgba(15, 23, 42, 0.85); border-radius: 6px; }
+      @media (max-width: 1100px) { body { overflow: auto; } .layout { grid-template-columns: 1fr; } #map { height: 50vh; } .sidebar { overflow: visible; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     </style>
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.2</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.3</div>
       <div class="actions">
-        <button id="toggle-theme" class="secondary">切换为浅色地图</button>
-        <span id="refresh" class="meta">加载中...</span>
+        <select id="lang-select"></select>
+        <button id="toggle-theme" class="secondary"></button>
+        <span id="refresh" class="meta"></span>
       </div>
     </header>
 
@@ -179,86 +62,132 @@
       <div id="map"></div>
       <aside class="sidebar">
         <section class="card">
-          <h3>筛选器</h3>
+          <h3 id="filters-title"></h3>
           <div id="topic-filters" class="filters"></div>
-          <div class="actions">
-            <button id="clear-filters" class="secondary">清空</button>
-          </div>
-          <p id="active-topics" class="meta" style="margin-bottom:0">当前：全部</p>
+          <div class="actions"><button id="clear-filters" class="secondary"></button></div>
+          <p id="active-topics" class="meta" style="margin-bottom:0"></p>
         </section>
 
         <section class="card">
-          <h3>数据概览</h3>
+          <h3 id="overview-title"></h3>
           <div class="kpis">
-            <div class="kpi"><div class="label">国家数量</div><div id="kpi-countries" class="value">0</div></div>
-            <div class="kpi"><div class="label">新闻总数</div><div id="kpi-events" class="value">0</div></div>
-            <div class="kpi"><div class="label">平均热度</div><div id="kpi-hotness" class="value">0</div></div>
+            <div class="kpi"><div class="label" id="label-countries"></div><div id="kpi-countries" class="value">0</div></div>
+            <div class="kpi"><div class="label" id="label-events"></div><div id="kpi-events" class="value">0</div></div>
+            <div class="kpi"><div class="label" id="label-hotness"></div><div id="kpi-hotness" class="value">0</div></div>
+            <div class="kpi tension-kpi">
+              <div class="label" id="label-tension"></div>
+              <div id="kpi-tension" class="value">0</div>
+              <div class="tension-tooltip">
+                <h4 id="tension-hotspots-title"></h4>
+                <ul id="tension-hotspots"></ul>
+                <h4 id="tension-trend-title"></h4>
+                <canvas id="tension-chart" width="260" height="90"></canvas>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section class="card">
-          <h3>全局 Top 8 热点</h3>
-          <ul id="global-list"></ul>
-        </section>
-
-        <section class="card">
-          <h3>当前区域热点</h3>
-          <p class="meta">点击地图国家圆点后自动更新（最多8条）</p>
-          <ul id="viewport-list"></ul>
-        </section>
+        <section class="card"><h3 id="global-title"></h3><ul id="global-list"></ul></section>
+        <section class="card"><h3 id="viewport-title"></h3><p class="meta" id="viewport-tip"></p><ul id="viewport-list"></ul></section>
       </aside>
     </main>
 
-    <script
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
+      const I18N = {
+        zh: { lang: '中文', switchLight: '切换为浅色地图', switchDark: '切换为深色地图', loading: '加载中...', filters: '筛选器', clear: '清空', all: '全部', current: '当前', overview: '数据概览', countries: '国家数量', events: '新闻总数', hotness: '平均热度', tension: '全球紧张度', hotspots: '主要热点区域', trend: '每小时紧张度变化', globalTop: '全局 Top 8 热点', viewport: '当前区域热点', viewportTip: '点击地图国家圆点后自动更新（最多8条）', noData: '暂无数据', viewSource: '查看原文', lastRefresh: '上次刷新', points: '分', eventCount: '事件数', mainType: '主类型' },
+        en: { lang: 'English', switchLight: 'Switch to light map', switchDark: 'Switch to dark map', loading: 'Loading...', filters: 'Filters', clear: 'Clear', all: 'All', current: 'Current', overview: 'Overview', countries: 'Countries', events: 'Total news', hotness: 'Avg hotness', tension: 'Global tension', hotspots: 'Top hotspot regions', trend: 'Hourly tension trend', globalTop: 'Global Top 8', viewport: 'Regional highlights', viewportTip: 'Click a country marker to update (up to 8)', noData: 'No data', viewSource: 'Read source', lastRefresh: 'Last refresh', points: 'pts', eventCount: 'Events', mainType: 'Main topic' },
+        ru: { lang: 'Русский', switchLight: 'Светлая карта', switchDark: 'Тёмная карта', loading: 'Загрузка...', filters: 'Фильтры', clear: 'Очистить', all: 'Все', current: 'Текущие', overview: 'Сводка', countries: 'Страны', events: 'Новости', hotness: 'Средняя горячесть', tension: 'Глобальная напряжённость', hotspots: 'Главные регионы', trend: 'Почасовой тренд', globalTop: 'Глобальный Top 8', viewport: 'Региональные события', viewportTip: 'Нажмите маркер страны (до 8)', noData: 'Нет данных', viewSource: 'Источник', lastRefresh: 'Обновлено', points: 'балл', eventCount: 'События', mainType: 'Главная тема' },
+        fr: { lang: 'Français', switchLight: 'Carte claire', switchDark: 'Carte sombre', loading: 'Chargement...', filters: 'Filtres', clear: 'Effacer', all: 'Tout', current: 'Actifs', overview: 'Aperçu', countries: 'Pays', events: 'Actualités', hotness: 'Chaleur moy.', tension: 'Tension mondiale', hotspots: 'Régions clés', trend: 'Évolution horaire', globalTop: 'Top 8 mondial', viewport: 'Foyer régional', viewportTip: 'Cliquez un marqueur de pays (max 8)', noData: 'Aucune donnée', viewSource: 'Source', lastRefresh: 'Dernière MAJ', points: 'pts', eventCount: 'Événements', mainType: 'Sujet principal' },
+        de: { lang: 'Deutsch', switchLight: 'Helle Karte', switchDark: 'Dunkle Karte', loading: 'Lädt...', filters: 'Filter', clear: 'Leeren', all: 'Alle', current: 'Aktiv', overview: 'Übersicht', countries: 'Länder', events: 'Nachrichten', hotness: 'Ø Hotness', tension: 'Globale Spannung', hotspots: 'Top-Regionen', trend: 'Stündlicher Verlauf', globalTop: 'Globale Top 8', viewport: 'Regionale Hotspots', viewportTip: 'Landesmarker anklicken (max. 8)', noData: 'Keine Daten', viewSource: 'Quelle', lastRefresh: 'Aktualisiert', points: 'Pkt', eventCount: 'Ereignisse', mainType: 'Top-Thema' }
+      };
+      const TOPIC_LABELS = {
+        military: { zh: '军事', en: 'military', ru: 'Военные', fr: 'Militaire', de: 'Militär' },
+        politics: { zh: '政治', en: 'politics', ru: 'Политика', fr: 'Politique', de: 'Politik' },
+        technology: { zh: '科技', en: 'technology', ru: 'Технологии', fr: 'Technologie', de: 'Technologie' },
+        science: { zh: '科学', en: 'science', ru: 'Наука', fr: 'Science', de: 'Wissenschaft' },
+        disaster: { zh: '灾害', en: 'disaster', ru: 'Бедствия', fr: 'Catastrophe', de: 'Katastrophe' },
+        'public-health': { zh: '公共卫生', en: 'public-health', ru: 'Общественное здоровье', fr: 'Santé publique', de: 'Öffentliche Gesundheit' },
+        diplomacy: { zh: '外交', en: 'diplomacy', ru: 'Дипломатия', fr: 'Diplomatie', de: 'Diplomatie' },
+        economy: { zh: '经济', en: 'economy', ru: 'Экономика', fr: 'Économie', de: 'Wirtschaft' },
+        general: { zh: '综合', en: 'general', ru: 'Общее', fr: 'Général', de: 'Allgemein' }
+      };
+
       const THEME_KEY = 'gigdis-theme';
+      const LANG_KEY = 'gigdis-lang';
       const map = L.map('map').setView([25, 10], 2);
       const tileLayers = {
-        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 7,
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-        }),
-        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          maxZoom: 7,
-          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-        })
+        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 7, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 7, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' })
       };
       let currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
       let activeTileLayer = null;
-
       const markers = L.layerGroup().addTo(map);
       let selectedCountry = null;
       let activeTopics = [];
-
+      let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
       const ALL_TOPICS = ['military', 'politics', 'technology', 'science', 'disaster', 'public-health', 'diplomacy', 'economy', 'general'];
+
+      function t() { return I18N[currentLang] || I18N.zh; }
+      function topicLabel(topic) { return (TOPIC_LABELS[topic] || {})[currentLang] || topic; }
 
       function applyTheme(theme) {
         currentTheme = theme === 'light' ? 'light' : 'dark';
         document.body.dataset.theme = currentTheme;
         localStorage.setItem(THEME_KEY, currentTheme);
-
-        if (activeTileLayer) {
-          map.removeLayer(activeTileLayer);
-        }
+        if (activeTileLayer) map.removeLayer(activeTileLayer);
         activeTileLayer = tileLayers[currentTheme];
         activeTileLayer.addTo(map);
-
-        const button = document.getElementById('toggle-theme');
-        button.textContent = currentTheme === 'dark' ? '切换为浅色地图' : '切换为深色地图';
+        document.getElementById('toggle-theme').textContent = currentTheme === 'dark' ? t().switchLight : t().switchDark;
       }
 
-      function initFilters() {
+      function setupLanguage() {
+        const select = document.getElementById('lang-select');
+        select.innerHTML = '';
+        Object.keys(I18N).forEach(key => {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.textContent = I18N[key].lang;
+          opt.selected = key === currentLang;
+          select.appendChild(opt);
+        });
+        select.addEventListener('change', async (e) => {
+          currentLang = e.target.value;
+          localStorage.setItem(LANG_KEY, currentLang);
+          rerenderStaticText();
+          initFilters(true);
+          await bootstrap();
+        });
+      }
+
+      function rerenderStaticText() {
+        document.getElementById('filters-title').textContent = t().filters;
+        document.getElementById('clear-filters').textContent = t().clear;
+        document.getElementById('overview-title').textContent = t().overview;
+        document.getElementById('label-countries').textContent = t().countries;
+        document.getElementById('label-events').textContent = t().events;
+        document.getElementById('label-hotness').textContent = t().hotness;
+        document.getElementById('label-tension').textContent = t().tension;
+        document.getElementById('tension-hotspots-title').textContent = t().hotspots;
+        document.getElementById('tension-trend-title').textContent = t().trend;
+        document.getElementById('global-title').textContent = t().globalTop;
+        document.getElementById('viewport-title').textContent = t().viewport;
+        document.getElementById('viewport-tip').textContent = t().viewportTip;
+        document.getElementById('refresh').textContent = t().loading;
+        applyTheme(currentTheme);
+      }
+
+      function initFilters(force = false) {
         const root = document.getElementById('topic-filters');
+        if (!force && root.childElementCount) return;
+        root.innerHTML = '';
         ALL_TOPICS.forEach(topic => {
           const button = document.createElement('button');
           button.type = 'button';
           button.className = 'filter-button';
           button.dataset.topic = topic;
-          button.textContent = topic;
+          button.textContent = topicLabel(topic);
+          if (activeTopics.includes(topic)) button.classList.add('active');
           button.addEventListener('click', async () => {
             button.classList.toggle('active');
             activeTopics = readSelectedTopics();
@@ -269,132 +198,120 @@
         });
       }
 
-      function readSelectedTopics() {
-        return [...document.querySelectorAll('#topic-filters .filter-button.active')].map(el => el.dataset.topic);
-      }
-
-      function clearSelectedTopics() {
-        document.querySelectorAll('#topic-filters .filter-button').forEach(el => {
-          el.classList.remove('active');
-        });
-      }
-
-      function topicQuery() {
-        if (!activeTopics.length) {
-          return '';
-        }
-        return `topics=${encodeURIComponent(activeTopics.join(','))}`;
-      }
+      function readSelectedTopics() { return [...document.querySelectorAll('#topic-filters .filter-button.active')].map(el => el.dataset.topic); }
+      function clearSelectedTopics() { document.querySelectorAll('#topic-filters .filter-button').forEach(el => el.classList.remove('active')); }
+      function topicQuery() { return activeTopics.length ? `topics=${encodeURIComponent(activeTopics.join(','))}` : ''; }
 
       function renderList(el, items) {
         el.innerHTML = '';
-        if (!items.length) {
-          el.innerHTML = '<li>暂无数据</li>';
-          return;
-        }
+        if (!items.length) { el.innerHTML = `<li>${t().noData}</li>`; return; }
         items.forEach(item => {
           const li = document.createElement('li');
-          const text = document.createTextNode(`${item.country}｜${item.topic}｜${item.hotness}分｜${item.title}`);
-          li.appendChild(text);
+          const label = item.topic_label || topicLabel(item.topic);
+          li.appendChild(document.createTextNode(`${item.country}｜${label}｜${item.hotness}${t().points}｜${item.title}`));
           if (item.link) {
             const link = document.createElement('a');
-            link.href = item.link;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.textContent = '查看原文';
+            link.href = item.link; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = t().viewSource;
             li.appendChild(link);
           }
           el.appendChild(li);
         });
       }
 
-      function renderKpis(countries) {
+      function drawTensionChart(points) {
+        const canvas = document.getElementById('tension-chart');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!points.length) return;
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 2;
+        const max = 100;
+        const len = points.length;
+        points.forEach((p, idx) => {
+          const x = (idx / Math.max(1, len - 1)) * (canvas.width - 10) + 5;
+          const y = (1 - p.score / max) * (canvas.height - 16) + 8;
+          if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      function renderTension(tension) {
+        document.getElementById('kpi-tension').textContent = String(tension.score ?? 0);
+        const root = document.getElementById('tension-hotspots');
+        root.innerHTML = '';
+        const regions = tension.top_regions || [];
+        if (!regions.length) {
+          root.innerHTML = `<li>${t().noData}</li>`;
+        } else {
+          regions.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = `${item.region}: ${Math.round(item.heat)} ${t().points}`;
+            root.appendChild(li);
+          });
+        }
+        drawTensionChart(tension.hourly_trend || []);
+      }
+
+      function renderKpis(countries, tension) {
         const totalCountries = countries.length;
         const totalEvents = countries.reduce((acc, item) => acc + item.event_count, 0);
-        const avgHotness = totalCountries
-          ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries).toFixed(1)
-          : '0';
+        const avgHotness = totalCountries ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries).toFixed(1) : '0';
         document.getElementById('kpi-countries').textContent = String(totalCountries);
         document.getElementById('kpi-events').textContent = String(totalEvents);
         document.getElementById('kpi-hotness').textContent = String(avgHotness);
+        renderTension(tension || {});
       }
 
       function markerStyle(country, stats) {
-        const hotnessRatio = stats.hotnessSpan > 0
-          ? (country.avg_hotness - stats.minHotness) / stats.hotnessSpan
-          : 0.5;
+        const hotnessRatio = stats.hotnessSpan > 0 ? (country.avg_hotness - stats.minHotness) / stats.hotnessSpan : 0.5;
         const countRatio = stats.maxEvents > 0 ? country.event_count / stats.maxEvents : 0;
         const radius = 6 + countRatio * 14 + hotnessRatio * 8;
         const hue = 210 - hotnessRatio * 190;
-        const fillColor = `hsl(${hue}, 85%, 52%)`;
-        const borderColor = `hsl(${Math.max(0, hue - 15)}, 90%, 42%)`;
-        return { radius, fillColor, borderColor };
+        return { radius, fillColor: `hsl(${hue}, 85%, 52%)`, borderColor: `hsl(${Math.max(0, hue - 15)}, 90%, 42%)` };
       }
 
       async function loadPanel(country = null) {
         const params = [];
-        if (country) {
-          params.push(`viewport_country=${encodeURIComponent(country)}`);
-        }
-        const tq = topicQuery();
-        if (tq) {
-          params.push(tq);
-        }
-        const query = params.length ? `?${params.join('&')}` : '';
-        const panel = await fetch(`/api/v1/panel${query}`).then(r => r.json());
+        if (country) params.push(`viewport_country=${encodeURIComponent(country)}`);
+        const tq = topicQuery(); if (tq) params.push(tq);
+        params.push(`lang=${encodeURIComponent(currentLang)}`);
+        const panel = await fetch(`/api/v1/panel?${params.join('&')}`).then(r => r.json());
         renderList(document.getElementById('global-list'), (panel.global_top || []).slice(0, 8));
         renderList(document.getElementById('viewport-list'), (panel.viewport_related || []).slice(0, 8));
       }
 
       async function bootstrap() {
-        const query = topicQuery();
-        const hotspots = await fetch(`/api/v1/hotspots${query ? `?${query}` : ''}`).then(r => r.json());
-        document.getElementById('refresh').textContent = `上次刷新：${hotspots.last_refresh || 'N/A'}`;
-        document.getElementById('active-topics').textContent = `当前：${activeTopics.length ? activeTopics.join(', ') : '全部'}`;
-        renderKpis(hotspots.countries || []);
+        const params = [];
+        const tq = topicQuery(); if (tq) params.push(tq);
+        params.push(`lang=${encodeURIComponent(currentLang)}`);
+        const hotspots = await fetch(`/api/v1/hotspots?${params.join('&')}`).then(r => r.json());
+        document.getElementById('refresh').textContent = `${t().lastRefresh}：${hotspots.last_refresh || 'N/A'}`;
+        document.getElementById('active-topics').textContent = `${t().current}：${activeTopics.length ? activeTopics.map(topicLabel).join(', ') : t().all}`;
+        renderKpis(hotspots.countries || [], hotspots.global_tension || {});
 
         markers.clearLayers();
         const countries = hotspots.countries || [];
         const hotnessValues = countries.map(c => c.avg_hotness);
-        const stats = {
-          maxEvents: Math.max(...countries.map(c => c.event_count), 1),
-          minHotness: hotnessValues.length ? Math.min(...hotnessValues) : 0,
-          maxHotness: hotnessValues.length ? Math.max(...hotnessValues) : 100,
-        };
+        const stats = { maxEvents: Math.max(...countries.map(c => c.event_count), 1), minHotness: hotnessValues.length ? Math.min(...hotnessValues) : 0, maxHotness: hotnessValues.length ? Math.max(...hotnessValues) : 100 };
         stats.hotnessSpan = Math.max(1, stats.maxHotness - stats.minHotness);
 
         countries.forEach(country => {
           const style = markerStyle(country, stats);
-          const marker = L.circleMarker([country.lat, country.lon], {
-            radius: style.radius,
-            color: style.borderColor,
-            fillColor: style.fillColor,
-            fillOpacity: 0.7
-          });
-          marker.bindPopup(`<b>${country.country}</b><br/>事件数: ${country.event_count}<br/>热度: ${country.avg_hotness}<br/>主类型: ${country.top_topic}`);
-          marker.on('click', () => {
-            selectedCountry = country.country;
-            loadPanel(selectedCountry);
-          });
+          const marker = L.circleMarker([country.lat, country.lon], { radius: style.radius, color: style.borderColor, fillColor: style.fillColor, fillOpacity: 0.7 });
+          marker.bindPopup(`<b>${country.country}</b><br/>${t().eventCount}: ${country.event_count}<br/>${t().hotness}: ${country.avg_hotness}<br/>${t().mainType}: ${country.top_topic_label || topicLabel(country.top_topic)}`);
+          marker.on('click', () => { selectedCountry = country.country; loadPanel(selectedCountry); });
           marker.addTo(markers);
         });
 
         await loadPanel(selectedCountry);
       }
 
-      document.getElementById('toggle-theme').addEventListener('click', () => {
-        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-      });
+      document.getElementById('toggle-theme').addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
+      document.getElementById('clear-filters').addEventListener('click', async () => { clearSelectedTopics(); activeTopics = []; selectedCountry = null; await bootstrap(); });
 
-      document.getElementById('clear-filters').addEventListener('click', async () => {
-        clearSelectedTopics();
-        activeTopics = [];
-        selectedCountry = null;
-        await bootstrap();
-      });
-
+      setupLanguage();
+      rerenderStaticText();
       initFilters();
-      applyTheme(currentTheme);
       bootstrap();
       setInterval(bootstrap, 15 * 60 * 1000);
     </script>
