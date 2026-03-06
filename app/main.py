@@ -1,4 +1,4 @@
-"""Project GIGDIS alpha0.4.1 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.4.2 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -39,8 +39,6 @@ STATE: dict[str, object] = {
 }
 
 CONFLICT_KEYWORDS = {
-    "attack",
-    "attacks",
     "airstrike",
     "airstrikes",
     "bombardment",
@@ -57,13 +55,38 @@ CONFLICT_KEYWORDS = {
     "troops",
     "ceasefire",
     "casualties",
-    "killed",
     "wounded",
-    "defense",
-    "drill",
     "interception",
     "patrol",
     "readiness",
+}
+
+MILITARY_CONTEXT_KEYWORDS = {
+    "war",
+    "airstrike",
+    "missile",
+    "military",
+    "armed forces",
+    "troop",
+    "defense ministry",
+    "artillery",
+    "frontline",
+    "ceasefire",
+    "drone strike",
+    "navy",
+    "army",
+}
+
+NON_MILITARY_ATTACK_HINTS = {
+    "animal",
+    "shark",
+    "crocodile",
+    "spider",
+    "snake",
+    "wildlife",
+    "tourist",
+    "hiker",
+    "killed by",
 }
 
 
@@ -162,7 +185,10 @@ def _build_conflict_zones(events: list[HotspotEvent]) -> list[dict[str, object]]
 
 def _is_conflict_event(event: HotspotEvent) -> bool:
     text = f"{event.title} {event.summary}".lower()
-    return any(keyword in text for keyword in CONFLICT_KEYWORDS)
+    has_conflict_keyword = any(keyword in text for keyword in CONFLICT_KEYWORDS)
+    has_military_context = any(keyword in text for keyword in MILITARY_CONTEXT_KEYWORDS)
+    non_military_attack = "attack" in text and any(hint in text for hint in NON_MILITARY_ATTACK_HINTS)
+    return has_conflict_keyword and has_military_context and not non_military_attack
 
 
 def _read_limit_per_source(query: dict[str, list[str]]) -> int:
@@ -244,7 +270,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.4.1",
+                    "version": "0.4.2",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -313,7 +339,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.4.1 已启动", flush=True)
+    print("Project GIGDIS alpha0.4.2 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

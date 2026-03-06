@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS alpha0.4.1."""
+"""Hotspot extraction pipeline for Project GIGDIS alpha0.4.2."""
 
 from __future__ import annotations
 
@@ -63,6 +63,35 @@ TOPIC_TRANSLATIONS = {
     },
 }
 
+
+MILITARY_CONTEXT_KEYWORDS = {
+    "war",
+    "airstrike",
+    "missile",
+    "military",
+    "armed forces",
+    "troop",
+    "defense ministry",
+    "artillery",
+    "frontline",
+    "ceasefire",
+    "drone strike",
+    "navy",
+    "army",
+}
+
+NON_MILITARY_ATTACK_HINTS = {
+    "animal",
+    "shark",
+    "crocodile",
+    "spider",
+    "snake",
+    "wildlife",
+    "tourist",
+    "hiker",
+    "killed by",
+}
+
 PHRASE_TRANSLATIONS = {
     "zh": {
         "Regional defense exercise expands naval deployment": "区域防务演习扩大海军部署",
@@ -122,8 +151,16 @@ def _infer_country(text: str) -> str | None:
 def _infer_topic(text: str) -> str:
     lower = text.lower()
     for topic, keywords in TOPIC_KEYWORDS.items():
-        if any(keyword in lower for keyword in keywords):
-            return topic
+        if topic != "military":
+            if any(keyword in lower for keyword in keywords):
+                return topic
+            continue
+
+        military_hits = [keyword for keyword in keywords if keyword in lower]
+        has_context = any(keyword in lower for keyword in MILITARY_CONTEXT_KEYWORDS)
+        non_military_attack = "attack" in lower and any(hint in lower for hint in NON_MILITARY_ATTACK_HINTS)
+        if military_hits and has_context and not non_military_attack:
+            return "military"
     return "general"
 
 

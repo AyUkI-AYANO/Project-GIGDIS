@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS alpha0.4.1."""
+"""Data source definitions for Project GIGDIS alpha0.4.2."""
 
 RSS_SOURCES = [
     {
@@ -107,7 +107,7 @@ COUNTRY_COORDS = {
 }
 
 TOPIC_KEYWORDS = {
-    "military": ["war", "strike", "attack", "missile", "military", "conflict", "troop"],
+    "military": ["war", "airstrike", "missile", "military", "armed forces", "troop", "defense ministry", "artillery", "frontline", "ceasefire", "drone strike"],
     "politics": ["election", "parliament", "government", "president", "prime minister", "policy"],
     "technology": ["ai", "chip", "semiconductor", "software", "cyber", "tech", "startup"],
     "science": ["space", "nasa", "research", "scientist", "laboratory", "climate"],
