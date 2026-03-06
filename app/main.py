@@ -1,4 +1,4 @@
-"""Project GIGDIS alpha0.3.0 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.3.1 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.3.0",
+                    "version": "0.3.1",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "topics": AVAILABLE_TOPICS,
@@ -212,7 +212,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.3.0 已启动", flush=True)
+    print("Project GIGDIS alpha0.3.1 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

@@ -1,4 +1,4 @@
-# Tile Plugin 规范（alpha0.3.0）
+# Tile Plugin 规范（alpha0.3.1）
 
 本文档说明如何为 Project GIGDIS 编写并安装“磁贴插件”。
 
@@ -7,6 +7,7 @@
 - 插件以 **JSON 文件** 存放在 `app/static/plugins/`。
 - `index.json` 是清单文件，列出可加载插件文件名。
 - 前端启动后会读取清单并逐个加载插件，成功后自动出现在“磁贴列表选择”中。
+- alpha0.3.1 起，插件支持更多模板变量、点路径变量（如 `{panel.lang}`）、以及外部数据源变量注入。
 
 ## 2. 目录结构
 
@@ -52,14 +53,23 @@ app/static/plugins/
   "subTemplate": {
     "zh": "热度变化 {heatDelta} /h",
     "en": "Heat delta {heatDelta} /h"
-  }
+  },
+  "externalSources": [
+    {
+      "key": "quote",
+      "url": "https://example.com/api/quote",
+      "responseType": "json",
+      "path": "data.text",
+      "ttlSeconds": 300
+    }
+  ]
 }
 ```
 
 ### 必填字段
 
 - `id`: 字符串，插件唯一 ID。
-- `type`: 字符串，目前支持：
+- `type`: 字符串，当前支持：
   - `metric`
   - `text`
   - `list`
@@ -69,12 +79,20 @@ app/static/plugins/
 ### 可选字段
 
 - `title`: 多语言标题对象，建议至少提供 `zh` 和 `en`。
-- `valueTemplate`: 磁贴主值模板。
-- `subTemplate`: 磁贴副标题模板。
+- `valueTemplate`: 磁贴主值模板（支持字符串或多语言对象）。
+- `subTemplate`: 磁贴副标题模板（支持字符串或多语言对象）。
+- `externalSources`: 外部变量源列表。
+  - `key`: 注入到模板中的变量名。
+  - `url`: 请求地址（也支持模板变量）。
+  - `responseType`: `json`（默认）或 `text`。
+  - `path`: 从响应中提取字段，支持点路径（如 `data.content.title`）。
+  - `ttlSeconds`: 缓存秒数，默认 300 秒。
 
 ## 5. 支持的模板变量
 
-模板中可以使用 `{变量名}`，渲染时会替换为当前上下文值。当前支持：
+模板中可以使用 `{变量名}`，渲染时会替换为当前上下文值。支持点路径访问。
+
+基础变量：
 
 - `{tensionScore}`：全球紧张度分值
 - `{tensionDelta}`：紧张度较上次刷新变化
@@ -82,17 +100,32 @@ app/static/plugins/
 - `{countries}`：国家数量
 - `{events}`：新闻总数
 - `{activeTopics}`：当前主题文本
+- `{selectedCountry}`：当前选中的国家
+- `{refreshMinutes}`：自动刷新分钟数
+- `{lastRefresh}`：服务端上次刷新时间
+- `{topCountryByEvents}`：当前事件数最多国家
+- `{topTopic}`：当前主热点主题文本
+- `{nowISO}`：当前客户端时间 ISO 字符串
+
+高级变量（对象路径）：
+
+- `{panel.lang}`、`{panel.global_top}`、`{panel.viewport_related}`（来自 `/api/v1/panel`）
+- `{hotspots.lang}`、`{hotspots.last_refresh}`、`{hotspots.global_tension.score}`（来自 `/api/v1/hotspots`）
+- `{quote}`（示例中的外部变量，按 `externalSources.key` 注入）
 
 示例：
 
 - `"valueTemplate": {"zh": "国家 {countries}"}`
 - `"subTemplate": {"zh": "主题：{activeTopics}"}`
+- `"valueTemplate": {"zh": "紧张度 {hotspots.global_tension.score}"}`
+- `"subTemplate": {"zh": "外部引用：{quote}"}`
 
 ## 6. 编写建议
 
 - `id` 使用小驼峰或短横线，避免空格。
 - 每个插件只表达一个清晰指标。
 - 文案建议简短，避免撑高磁贴高度。
+- 外部源建议设置合理 `ttlSeconds`，避免频繁请求。
 - 多语言缺失时会回退到 `zh` 或 `en`。
 
 ## 7. 安装步骤
@@ -107,4 +140,4 @@ app/static/plugins/
 - 插件文件读取失败：该插件被跳过，不影响其他磁贴。
 - JSON 格式错误：该插件被跳过。
 - 缺少 `id` 或 `type`：该插件被跳过。
-
+- 外部变量拉取失败：该变量降级为空字符串，不影响其他变量渲染。

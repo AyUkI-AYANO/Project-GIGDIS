@@ -1,5 +1,6 @@
 {
   "plugins": [
-    "risk-summary.plugin.json"
+    "risk-summary.plugin.json",
+    "web-quote.plugin.json"
   ]
 }

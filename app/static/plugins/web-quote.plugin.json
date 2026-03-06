@@ -1,0 +1,25 @@
+{
+  "id": "webQuote",
+  "type": "text",
+  "title": {
+    "zh": "网页摘要",
+    "en": "Web summary"
+  },
+  "valueTemplate": {
+    "zh": "当前热点国家：{topCountryByEvents}",
+    "en": "Top country: {topCountryByEvents}"
+  },
+  "subTemplate": {
+    "zh": "示例外部内容：{quote}",
+    "en": "External content: {quote}"
+  },
+  "externalSources": [
+    {
+      "key": "quote",
+      "url": "https://v1.hitokoto.cn/?encode=json",
+      "responseType": "json",
+      "path": "hitokoto",
+      "ttlSeconds": 600
+    }
+  ]
+}
