@@ -1,0 +1,15 @@
+{
+  "id": "conflictFocus",
+  "type": "map-marker",
+  "title": {
+    "zh": "冲突地区标记",
+    "en": "Conflict zone marker"
+  },
+  "markersPath": "hotspots.conflict_zones",
+  "color": "#f43f5e",
+  "radiusBase": 7,
+  "popupTemplate": {
+    "zh": "<b>{country}</b><br/>冲突事件: {event_count} 条<br/>强度: {intensity} 分<br/>{headline}",
+    "en": "<b>{country}</b><br/>Conflict events: {event_count}<br/>Intensity: {intensity}<br/>{headline}"
+  }
+}

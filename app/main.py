@@ -1,4 +1,4 @@
-"""Project GIGDIS alpha0.3.2 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.4.0 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from pipeline import (
     filter_events_by_topics,
     normalize_language,
 )
-from sources import AVAILABLE_TOPICS
+from sources import AVAILABLE_TOPICS, COUNTRY_COORDS
 
 HOST = "0.0.0.0"
 PORT = 8000
@@ -37,6 +37,8 @@ STATE: dict[str, object] = {
     "tension_history": [],
     "limit_per_source": DEFAULT_LIMIT_PER_SOURCE,
 }
+
+CONFLICT_FOCUS_REGIONS = ["Ukraine", "Iran", "Israel", "Palestine", "Russia"]
 
 
 class Refresher(Thread):
@@ -94,6 +96,55 @@ def refresh_hotspots() -> None:
     STATE["last_refresh"] = datetime.now(timezone.utc).isoformat()
     tension = _compute_tension(events)
     _append_tension_history(tension, events)
+
+
+def _build_conflict_zones(events: list[HotspotEvent]) -> list[dict[str, object]]:
+    military = [event for event in events if event.topic == "military"]
+    bucket: dict[str, dict[str, object]] = {}
+    for event in military:
+        if event.country not in bucket:
+            bucket[event.country] = {
+                "country": event.country,
+                "lat": event.lat,
+                "lon": event.lon,
+                "event_count": 0,
+                "avg_hotness": 0.0,
+                "headline": event.title,
+            }
+        record = bucket[event.country]
+        record["event_count"] = int(record["event_count"]) + 1
+        record["avg_hotness"] = float(record["avg_hotness"]) + event.hotness
+
+    zones: list[dict[str, object]] = []
+    for country, record in bucket.items():
+        event_count = int(record["event_count"])
+        avg_hotness = round(float(record["avg_hotness"]) / max(event_count, 1), 2)
+        zones.append(
+            {
+                "country": country,
+                "lat": record["lat"],
+                "lon": record["lon"],
+                "event_count": event_count,
+                "intensity": avg_hotness,
+                "headline": record["headline"],
+            }
+        )
+
+    by_country = {zone["country"]: zone for zone in zones}
+    for country in CONFLICT_FOCUS_REGIONS:
+        if country in by_country:
+            continue
+        by_country[country] = {
+            "country": country,
+            "lat": COUNTRY_COORDS.get(country, (0.0, 0.0))[0],
+            "lon": COUNTRY_COORDS.get(country, (0.0, 0.0))[1],
+            "event_count": 0,
+            "intensity": 35.0,
+            "headline": "Monitoring ongoing regional military tension",
+        }
+
+    result = sorted(by_country.values(), key=lambda item: (float(item["intensity"]), int(item["event_count"])), reverse=True)
+    return result[:8]
 
 
 def _read_limit_per_source(query: dict[str, list[str]]) -> int:
@@ -175,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.3.2",
+                    "version": "0.4.0",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -207,12 +258,14 @@ class Handler(BaseHTTPRequestHandler):
                 {"timestamp": item["timestamp"], "score": item["score"]}
                 for item in tension_history
             ]
+            conflict_zones = _build_conflict_zones(filtered)
             return self._json(
                 {
                     "last_refresh": STATE["last_refresh"],
                     "active_topics": topics,
                     "lang": lang,
                     "countries": aggregate_by_country(filtered, lang=lang),
+                    "conflict_zones": conflict_zones,
                     "global_tension": {
                         "score": latest_tension["score"],
                         "top_regions": latest_tension["top_regions"],
@@ -242,7 +295,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.3.2 已启动", flush=True)
+    print("Project GIGDIS alpha0.4.0 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
