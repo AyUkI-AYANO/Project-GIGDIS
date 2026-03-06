@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS alpha0.1.2."""
+"""Data source definitions for Project GIGDIS alpha0.2.2."""
 
 RSS_SOURCES = [
     {
@@ -40,6 +40,11 @@ RSS_SOURCES = [
         "name": "NPR World",
         "url": "https://feeds.npr.org/1004/rss.xml",
         "credibility": 0.89,
+    },
+    {
+        "name": "CNN World",
+        "url": "http://rss.cnn.com/rss/edition_world.rss",
+        "credibility": 0.87,
     },
 ]
 

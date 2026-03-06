@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.2.1</title>
+    <title>Project GIGDIS alpha0.2.2</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -109,12 +109,22 @@
         gap: 8px;
         margin: 10px 0;
       }
-      .tag {
+      .filter-button {
         background: var(--tag-bg);
         border: 1px solid var(--tag-border);
+        color: var(--text);
         border-radius: 999px;
-        padding: 4px 10px;
+        padding: 5px 11px;
         font-size: 12px;
+        transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
+      }
+      .filter-button:hover {
+        transform: translateY(-1px);
+      }
+      .filter-button.active {
+        border-color: #22d3ee;
+        background: linear-gradient(120deg, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.35));
+        box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3), 0 0 14px rgba(56, 189, 248, 0.45);
       }
       .actions {
         display: flex;
@@ -158,7 +168,7 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.1</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.2</div>
       <div class="actions">
         <button id="toggle-theme" class="secondary">切换为浅色地图</button>
         <span id="refresh" class="meta">加载中...</span>
@@ -172,7 +182,6 @@
           <h3>筛选器</h3>
           <div id="topic-filters" class="filters"></div>
           <div class="actions">
-            <button id="apply-filters">应用筛选</button>
             <button id="clear-filters" class="secondary">清空</button>
           </div>
           <p id="active-topics" class="meta" style="margin-bottom:0">当前：全部</p>
@@ -245,25 +254,28 @@
       function initFilters() {
         const root = document.getElementById('topic-filters');
         ALL_TOPICS.forEach(topic => {
-          const label = document.createElement('label');
-          label.className = 'tag';
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.value = topic;
-          input.style.marginRight = '6px';
-          label.appendChild(input);
-          label.appendChild(document.createTextNode(topic));
-          root.appendChild(label);
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'filter-button';
+          button.dataset.topic = topic;
+          button.textContent = topic;
+          button.addEventListener('click', async () => {
+            button.classList.toggle('active');
+            activeTopics = readSelectedTopics();
+            selectedCountry = null;
+            await bootstrap();
+          });
+          root.appendChild(button);
         });
       }
 
       function readSelectedTopics() {
-        return [...document.querySelectorAll('#topic-filters input:checked')].map(el => el.value);
+        return [...document.querySelectorAll('#topic-filters .filter-button.active')].map(el => el.dataset.topic);
       }
 
       function clearSelectedTopics() {
-        document.querySelectorAll('#topic-filters input').forEach(el => {
-          el.checked = false;
+        document.querySelectorAll('#topic-filters .filter-button').forEach(el => {
+          el.classList.remove('active');
         });
       }
 
@@ -372,12 +384,6 @@
 
       document.getElementById('toggle-theme').addEventListener('click', () => {
         applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
-      });
-
-      document.getElementById('apply-filters').addEventListener('click', async () => {
-        activeTopics = readSelectedTopics();
-        selectedCountry = null;
-        await bootstrap();
       });
 
       document.getElementById('clear-filters').addEventListener('click', async () => {
