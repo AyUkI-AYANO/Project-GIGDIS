@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS alpha0.2.2."""
+"""Hotspot extraction pipeline for Project GIGDIS alpha0.2.3."""
 
 from __future__ import annotations
 
@@ -13,6 +13,74 @@ import xml.etree.ElementTree as ET
 from sources import COUNTRY_COORDS, COUNTRY_KEYWORDS, RSS_SOURCES, TOPIC_KEYWORDS
 
 MIN_EVENTS_PER_TOPIC = 3
+SUPPORTED_LANGUAGES = {"zh", "en", "ru", "fr", "de"}
+
+TOPIC_TRANSLATIONS = {
+    "zh": {
+        "military": "军事",
+        "politics": "政治",
+        "technology": "科技",
+        "science": "科学",
+        "disaster": "灾害",
+        "public-health": "公共卫生",
+        "diplomacy": "外交",
+        "economy": "经济",
+        "general": "综合",
+    },
+    "en": {},
+    "ru": {
+        "military": "Военные",
+        "politics": "Политика",
+        "technology": "Технологии",
+        "science": "Наука",
+        "disaster": "Бедствия",
+        "public-health": "Общественное здоровье",
+        "diplomacy": "Дипломатия",
+        "economy": "Экономика",
+        "general": "Общее",
+    },
+    "fr": {
+        "military": "Militaire",
+        "politics": "Politique",
+        "technology": "Technologie",
+        "science": "Science",
+        "disaster": "Catastrophe",
+        "public-health": "Santé publique",
+        "diplomacy": "Diplomatie",
+        "economy": "Économie",
+        "general": "Général",
+    },
+    "de": {
+        "military": "Militär",
+        "politics": "Politik",
+        "technology": "Technologie",
+        "science": "Wissenschaft",
+        "disaster": "Katastrophe",
+        "public-health": "Öffentliche Gesundheit",
+        "diplomacy": "Diplomatie",
+        "economy": "Wirtschaft",
+        "general": "Allgemein",
+    },
+}
+
+PHRASE_TRANSLATIONS = {
+    "zh": {
+        "Regional defense exercise expands naval deployment": "区域防务演习扩大海军部署",
+        "Joint patrol activity raises regional alert": "联合巡逻活动提升区域警戒",
+        "Border security forces conduct readiness drill": "边防部队开展战备演练",
+        "Defense ministry reports missile interception": "国防部通报导弹拦截行动",
+        "No data": "暂无数据",
+    },
+    "ru": {
+        "No data": "Нет данных",
+    },
+    "fr": {
+        "No data": "Aucune donnée",
+    },
+    "de": {
+        "No data": "Keine Daten",
+    },
+}
 
 
 @dataclass
@@ -57,6 +125,25 @@ def _infer_topic(text: str) -> str:
         if any(keyword in lower for keyword in keywords):
             return topic
     return "general"
+
+
+def normalize_language(lang: str | None) -> str:
+    candidate = (lang or "zh").strip().lower()
+    return candidate if candidate in SUPPORTED_LANGUAGES else "zh"
+
+
+def translate_topic(topic: str, lang: str) -> str:
+    language = normalize_language(lang)
+    return TOPIC_TRANSLATIONS.get(language, {}).get(topic, topic)
+
+
+def translate_text(text: str, lang: str) -> str:
+    language = normalize_language(lang)
+    if language == "en":
+        return text
+    if text in PHRASE_TRANSLATIONS.get(language, {}):
+        return PHRASE_TRANSLATIONS[language][text]
+    return text
 
 
 def _recency_score(published_at: datetime) -> float:
@@ -327,7 +414,7 @@ def dedupe_events(events: Iterable[Event]) -> list[Event]:
     return sorted(unique.values(), key=lambda item: item.hotness, reverse=True)
 
 
-def aggregate_by_country(events: Iterable[Event]) -> list[dict]:
+def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict]:
     bucket: dict[str, dict] = {}
     for event in events:
         if event.country not in bucket:
@@ -346,11 +433,12 @@ def aggregate_by_country(events: Iterable[Event]) -> list[dict]:
         record["top_events"].append(
             {
                 "event_id": event.event_id,
-                "title": event.title,
+                "title": translate_text(event.title, lang),
                 "source": event.source,
                 "published_at": event.published_at.isoformat(),
                 "hotness": event.hotness,
                 "topic": event.topic,
+                "topic_label": translate_topic(event.topic, lang),
                 "link": event.link,
             }
         )
@@ -363,18 +451,20 @@ def aggregate_by_country(events: Iterable[Event]) -> list[dict]:
         for event in record["top_events"]:
             topic_count[event["topic"]] = topic_count.get(event["topic"], 0) + 1
         record["top_topic"] = sorted(topic_count.items(), key=lambda item: item[1], reverse=True)[0][0]
+        record["top_topic_label"] = translate_topic(record["top_topic"], lang)
         result.append(record)
 
     return sorted(result, key=lambda item: item["avg_hotness"], reverse=True)
 
 
-def build_adaptive_panel(events: list[Event], viewport_country: str | None = None) -> dict:
+def build_adaptive_panel(events: list[Event], viewport_country: str | None = None, lang: str = "zh") -> dict:
     global_top = [
         {
-            "title": event.title,
+            "title": translate_text(event.title, lang),
             "country": event.country,
             "hotness": event.hotness,
             "topic": event.topic,
+            "topic_label": translate_topic(event.topic, lang),
             "source": event.source,
             "link": event.link,
         }
@@ -385,10 +475,11 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
     if viewport_country:
         viewport_related = [
             {
-                "title": event.title,
+                "title": translate_text(event.title, lang),
                 "country": event.country,
                 "hotness": event.hotness,
                 "topic": event.topic,
+                "topic_label": translate_topic(event.topic, lang),
                 "source": event.source,
                 "link": event.link,
             }

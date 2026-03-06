@@ -1,4 +1,4 @@
-"""Project GIGDIS alpha0.2.2 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.2.3 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,13 @@ from threading import Event, Thread
 from urllib.parse import parse_qs, urlparse
 
 from pipeline import Event as HotspotEvent
-from pipeline import aggregate_by_country, build_adaptive_panel, fetch_events, filter_events_by_topics
+from pipeline import (
+    aggregate_by_country,
+    build_adaptive_panel,
+    fetch_events,
+    filter_events_by_topics,
+    normalize_language,
+)
 from sources import AVAILABLE_TOPICS
 
 HOST = "0.0.0.0"
@@ -24,6 +30,7 @@ STATIC_DIR = ROOT / "static"
 STATE: dict[str, object] = {
     "events": [],
     "last_refresh": None,
+    "tension_history": [],
 }
 
 
@@ -41,10 +48,46 @@ class Refresher(Thread):
         self._stop_event.set()
 
 
+def _compute_tension(events: list[HotspotEvent]) -> int:
+    military = [event for event in events if event.topic == "military"]
+    military_count = len(military)
+    if military_count == 0:
+        return 0
+    avg_hotness = sum(event.hotness for event in military) / military_count
+    count_score = min(60.0, military_count * 2.6)
+    heat_score = min(40.0, avg_hotness * 0.4)
+    return int(round(min(100.0, count_score + heat_score)))
+
+
+def _append_tension_history(tension: int, events: list[HotspotEvent]) -> None:
+    hotspots: dict[str, float] = {}
+    for event in events:
+        if event.topic != "military":
+            continue
+        hotspots[event.country] = hotspots.get(event.country, 0.0) + event.hotness
+
+    top_regions = [
+        {"region": country, "heat": round(heat, 2)}
+        for country, heat in sorted(hotspots.items(), key=lambda item: item[1], reverse=True)[:5]
+    ]
+
+    history: list[dict[str, object]] = STATE.get("tension_history", [])  # type: ignore[assignment]
+    history.append(
+        {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "score": tension,
+            "top_regions": top_regions,
+        }
+    )
+    STATE["tension_history"] = history[-24:]
+
+
 def refresh_hotspots() -> None:
     events = fetch_events(limit_per_source=40)
     STATE["events"] = events
     STATE["last_refresh"] = datetime.now(timezone.utc).isoformat()
+    tension = _compute_tension(events)
+    _append_tension_history(tension, events)
 
 
 def _read_topic_filters(query: dict[str, list[str]]) -> list[str]:
@@ -55,6 +98,11 @@ def _read_topic_filters(query: dict[str, list[str]]) -> list[str]:
             continue
         topics.extend([part.strip().lower() for part in value.split(",") if part.strip()])
     return topics
+
+
+def _read_lang(query: dict[str, list[str]]) -> str:
+    raw = query.get("lang", ["zh"])[0]
+    return normalize_language(raw)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -86,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.2.2",
+                    "version": "0.2.3",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "topics": AVAILABLE_TOPICS,
@@ -96,12 +144,25 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/v1/hotspots":
             events: list[HotspotEvent] = STATE["events"]
             topics = _read_topic_filters(query)
+            lang = _read_lang(query)
             filtered = filter_events_by_topics(events, topics)
+            tension_history: list[dict] = STATE["tension_history"]  # type: ignore[assignment]
+            latest_tension = tension_history[-1] if tension_history else {"score": 0, "top_regions": []}
+            timeline = [
+                {"timestamp": item["timestamp"], "score": item["score"]}
+                for item in tension_history
+            ]
             return self._json(
                 {
                     "last_refresh": STATE["last_refresh"],
                     "active_topics": topics,
-                    "countries": aggregate_by_country(filtered),
+                    "lang": lang,
+                    "countries": aggregate_by_country(filtered, lang=lang),
+                    "global_tension": {
+                        "score": latest_tension["score"],
+                        "top_regions": latest_tension["top_regions"],
+                        "hourly_trend": timeline,
+                    },
                 }
             )
 
@@ -109,9 +170,11 @@ class Handler(BaseHTTPRequestHandler):
             events: list[HotspotEvent] = STATE["events"]
             viewport_country = query.get("viewport_country", [None])[0]
             topics = _read_topic_filters(query)
+            lang = _read_lang(query)
             filtered = filter_events_by_topics(events, topics)
-            panel = build_adaptive_panel(filtered, viewport_country)
+            panel = build_adaptive_panel(filtered, viewport_country, lang=lang)
             panel["active_topics"] = topics
+            panel["lang"] = lang
             return self._json(panel)
 
         self._json({"error": "Not Found"}, status=404)
@@ -124,7 +187,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.2.2 已启动", flush=True)
+    print("Project GIGDIS alpha0.2.3 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
