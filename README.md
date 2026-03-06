@@ -1,6 +1,6 @@
-# Project GIGDIS (alpha0.3.2)
+# Project GIGDIS (alpha0.4.0)
 
-Project GIGDIS 是一个全球热点地图系统的 alpha0.3.2 版本。
+Project GIGDIS 是一个全球热点地图系统的 alpha0.4.0 版本。
 
 ## 本版本新增能力
 
@@ -14,6 +14,13 @@ Project GIGDIS 是一个全球热点地图系统的 alpha0.3.2 版本。
 
 ## Update Log
 
+
+### alpha0.4.0
+- 地图新增“冲突地区”可视化图层：每次刷新后展示当前军事冲突热点区域（如乌克兰、伊朗、以色列等）。
+- `GET /api/v1/hotspots` 新增 `conflict_zones` 字段，返回冲突区域坐标、事件数、强度与参考标题。
+- 新增插件类型 `map-marker`，支持插件在地图上打点并自定义弹窗模板。
+- 优化插件目录结构：按 `tiles/` 与 `map-markers/` 分类管理，清单升级为双数组。
+- 更新插件规范文档，补充地图标记插件字段说明与示例。
 
 ### alpha0.3.2
 - 新增“手动刷新”按钮，用户可按需立即触发一次后端抓取与前端重载。
@@ -63,5 +70,5 @@ python app/main.py
 
 - `GET /api/v1/health`：服务健康、版本、可用类型、当前每源抓取上限。
 - `GET /api/v1/refresh?limit_per_source=40`：手动触发一次刷新，并可指定每个信息源抓取条数（5-100）。
-- `GET /api/v1/hotspots?topics=technology,military&lang=en`：按类型筛选地图热点数据，并返回全球紧张度。
+- `GET /api/v1/hotspots?topics=technology,military&lang=en`：按类型筛选地图热点数据，并返回全球紧张度与冲突地区。
 - `GET /api/v1/panel?viewport_country=China&topics=politics,technology&lang=fr`：按国家+类型+语言筛选信息栏内容。
