@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.1.1</title>
+    <title>Project GIGDIS alpha0.1.2</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -11,49 +11,142 @@
       crossorigin=""
     />
     <style>
-      body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
-      header { padding: 12px 16px; background: #1e293b; display: flex; justify-content: space-between; align-items: center; }
-      #map { height: 56vh; }
-      .panel { padding: 12px 16px; background: #111827; }
+      :root {
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: #0b1220;
+        color: #e2e8f0;
+      }
+      header {
+        padding: 14px 20px;
+        background: #111b30;
+        border-bottom: 1px solid #22314f;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .brand { font-size: 18px; font-weight: 700; }
       .meta { color: #93c5fd; font-size: 12px; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .card { background: #1f2937; border-radius: 8px; padding: 10px; }
-      ul { margin: 8px 0 0; padding-left: 18px; }
-      li { margin-bottom: 6px; }
-      .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-      .tag { background: #334155; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
-      .toolbar { margin-bottom: 10px; }
-      button { background: #0ea5e9; border: none; color: #fff; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
-      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 2fr) minmax(320px, 1fr);
+        gap: 12px;
+        padding: 12px;
+      }
+      #map {
+        height: 76vh;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #22314f;
+      }
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .card {
+        background: #111827;
+        border: 1px solid #273449;
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .card h3 { margin: 0 0 8px; font-size: 16px; }
+      .filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      .tag {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      button {
+        background: #0284c7;
+        border: none;
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #334155;
+      }
+      ul { margin: 0; padding-left: 18px; }
+      li { margin-bottom: 8px; line-height: 1.35; }
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .kpi {
+        background: #0f172a;
+        border: 1px solid #273449;
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .kpi .label { font-size: 11px; color: #94a3b8; }
+      .kpi .value { font-weight: 700; margin-top: 4px; }
+      @media (max-width: 1100px) {
+        .layout { grid-template-columns: 1fr; }
+        #map { height: 50vh; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <strong>Project GIGDIS · alpha0.1.1</strong>
+      <div class="brand">Project GIGDIS · alpha0.1.2</div>
       <span id="refresh" class="meta">加载中...</span>
     </header>
-    <div id="map"></div>
 
-    <section class="panel">
-      <div class="toolbar card">
-        <h3 style="margin-top:0">新闻类型筛选</h3>
-        <div id="topic-filters" class="filters"></div>
-        <button id="apply-filters">应用筛选</button>
-        <span id="active-topics" class="meta" style="margin-left:10px">当前：全部</span>
-      </div>
+    <main class="layout">
+      <div id="map"></div>
+      <aside class="sidebar">
+        <section class="card">
+          <h3>筛选器</h3>
+          <div id="topic-filters" class="filters"></div>
+          <div class="actions">
+            <button id="apply-filters">应用筛选</button>
+            <button id="clear-filters" class="secondary">清空</button>
+          </div>
+          <p id="active-topics" class="meta" style="margin-bottom:0">当前：全部</p>
+        </section>
 
-      <div class="grid">
-        <div class="card">
-          <h3>全局 Top 5 热点</h3>
+        <section class="card">
+          <h3>数据概览</h3>
+          <div class="kpis">
+            <div class="kpi"><div class="label">国家数量</div><div id="kpi-countries" class="value">0</div></div>
+            <div class="kpi"><div class="label">新闻总数</div><div id="kpi-events" class="value">0</div></div>
+            <div class="kpi"><div class="label">平均热度</div><div id="kpi-hotness" class="value">0</div></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>全局 Top 8 热点</h3>
           <ul id="global-list"></ul>
-        </div>
-        <div class="card">
-          <h3>当前区域相关热点</h3>
-          <p class="meta">点击任意国家圆点后自动更新</p>
+        </section>
+
+        <section class="card">
+          <h3>当前区域热点</h3>
+          <p class="meta">点击地图国家圆点后自动更新（最多8条）</p>
           <ul id="viewport-list"></ul>
-        </div>
-      </div>
-    </section>
+        </section>
+      </aside>
+    </main>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -92,6 +185,12 @@
         return [...document.querySelectorAll('#topic-filters input:checked')].map(el => el.value);
       }
 
+      function clearSelectedTopics() {
+        document.querySelectorAll('#topic-filters input').forEach(el => {
+          el.checked = false;
+        });
+      }
+
       function topicQuery() {
         if (!activeTopics.length) {
           return '';
@@ -112,6 +211,17 @@
         });
       }
 
+      function renderKpis(countries) {
+        const totalCountries = countries.length;
+        const totalEvents = countries.reduce((acc, item) => acc + item.event_count, 0);
+        const avgHotness = totalCountries
+          ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries).toFixed(1)
+          : '0';
+        document.getElementById('kpi-countries').textContent = String(totalCountries);
+        document.getElementById('kpi-events').textContent = String(totalEvents);
+        document.getElementById('kpi-hotness').textContent = String(avgHotness);
+      }
+
       async function loadPanel(country = null) {
         const params = [];
         if (country) {
@@ -123,8 +233,8 @@
         }
         const query = params.length ? `?${params.join('&')}` : '';
         const panel = await fetch(`/api/v1/panel${query}`).then(r => r.json());
-        renderList(document.getElementById('global-list'), panel.global_top);
-        renderList(document.getElementById('viewport-list'), panel.viewport_related || []);
+        renderList(document.getElementById('global-list'), (panel.global_top || []).slice(0, 8));
+        renderList(document.getElementById('viewport-list'), (panel.viewport_related || []).slice(0, 8));
       }
 
       async function bootstrap() {
@@ -132,6 +242,7 @@
         const hotspots = await fetch(`/api/v1/hotspots${query ? `?${query}` : ''}`).then(r => r.json());
         document.getElementById('refresh').textContent = `上次刷新：${hotspots.last_refresh || 'N/A'}`;
         document.getElementById('active-topics').textContent = `当前：${activeTopics.length ? activeTopics.join(', ') : '全部'}`;
+        renderKpis(hotspots.countries || []);
 
         markers.clearLayers();
         hotspots.countries.forEach(country => {
@@ -155,6 +266,13 @@
 
       document.getElementById('apply-filters').addEventListener('click', async () => {
         activeTopics = readSelectedTopics();
+        selectedCountry = null;
+        await bootstrap();
+      });
+
+      document.getElementById('clear-filters').addEventListener('click', async () => {
+        clearSelectedTopics();
+        activeTopics = [];
         selectedCountry = null;
         await bootstrap();
       });

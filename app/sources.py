@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS alpha0.1.1."""
+"""Data source definitions for Project GIGDIS alpha0.1.2."""
 
 RSS_SOURCES = [
     {
@@ -21,6 +21,26 @@ RSS_SOURCES = [
         "url": "https://feeds.reuters.com/reuters/technologyNews",
         "credibility": 0.93,
     },
+    {
+        "name": "Reuters Business",
+        "url": "https://feeds.reuters.com/reuters/businessNews",
+        "credibility": 0.93,
+    },
+    {
+        "name": "BBC Technology",
+        "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
+        "credibility": 0.9,
+    },
+    {
+        "name": "UN News",
+        "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml",
+        "credibility": 0.9,
+    },
+    {
+        "name": "NPR World",
+        "url": "https://feeds.npr.org/1004/rss.xml",
+        "credibility": 0.89,
+    },
 ]
 
 COUNTRY_KEYWORDS = {
@@ -40,6 +60,16 @@ COUNTRY_KEYWORDS = {
     "Turkey": ["turkey", "ankara", "istanbul"],
     "South Korea": ["south korea", "seoul"],
     "North Korea": ["north korea", "pyongyang"],
+    "Canada": ["canada", "ottawa", "toronto"],
+    "Mexico": ["mexico", "mexico city"],
+    "Brazil": ["brazil", "brasilia", "rio"],
+    "Australia": ["australia", "canberra", "sydney"],
+    "Indonesia": ["indonesia", "jakarta"],
+    "Saudi Arabia": ["saudi arabia", "riyadh"],
+    "Egypt": ["egypt", "cairo"],
+    "South Africa": ["south africa", "johannesburg", "pretoria"],
+    "Italy": ["italy", "rome"],
+    "Spain": ["spain", "madrid"],
 }
 
 COUNTRY_COORDS = {
@@ -59,6 +89,16 @@ COUNTRY_COORDS = {
     "Turkey": (38.9637, 35.2433),
     "South Korea": (35.9078, 127.7669),
     "North Korea": (40.3399, 127.5101),
+    "Canada": (56.1304, -106.3468),
+    "Mexico": (23.6345, -102.5528),
+    "Brazil": (-14.2350, -51.9253),
+    "Australia": (-25.2744, 133.7751),
+    "Indonesia": (-0.7893, 113.9213),
+    "Saudi Arabia": (23.8859, 45.0792),
+    "Egypt": (26.8206, 30.8025),
+    "South Africa": (-30.5595, 22.9375),
+    "Italy": (41.8719, 12.5674),
+    "Spain": (40.4637, -3.7492),
 }
 
 TOPIC_KEYWORDS = {
@@ -67,9 +107,9 @@ TOPIC_KEYWORDS = {
     "technology": ["ai", "chip", "semiconductor", "software", "cyber", "tech", "startup"],
     "science": ["space", "nasa", "research", "scientist", "laboratory", "climate"],
     "disaster": ["earthquake", "flood", "hurricane", "wildfire", "disaster"],
-    "public-health": ["virus", "disease", "outbreak", "health emergency"],
-    "diplomacy": ["summit", "talks", "diplomatic", "sanction", "treaty"],
-    "economy": ["inflation", "oil", "market", "trade", "economic", "tariff"],
+    "public-health": ["virus", "disease", "outbreak", "health emergency", "who", "vaccination"],
+    "diplomacy": ["summit", "talks", "diplomatic", "sanction", "treaty", "ceasefire", "negotiation"],
+    "economy": ["inflation", "oil", "market", "trade", "economic", "tariff", "gdp", "interest rate", "recession"],
 }
 
 AVAILABLE_TOPICS = [
