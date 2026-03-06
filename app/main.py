@@ -1,4 +1,4 @@
-"""Project GIGDIS alpha0.3.1 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.3.2 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -24,6 +24,9 @@ from sources import AVAILABLE_TOPICS
 HOST = "0.0.0.0"
 PORT = 8000
 REFRESH_SECONDS = 15 * 60
+DEFAULT_LIMIT_PER_SOURCE = 40
+MIN_LIMIT_PER_SOURCE = 5
+MAX_LIMIT_PER_SOURCE = 100
 
 ROOT = Path(__file__).resolve().parent
 STATIC_DIR = ROOT / "static"
@@ -32,6 +35,7 @@ STATE: dict[str, object] = {
     "events": [],
     "last_refresh": None,
     "tension_history": [],
+    "limit_per_source": DEFAULT_LIMIT_PER_SOURCE,
 }
 
 
@@ -84,11 +88,23 @@ def _append_tension_history(tension: int, events: list[HotspotEvent]) -> None:
 
 
 def refresh_hotspots() -> None:
-    events = fetch_events(limit_per_source=40)
+    limit_per_source = int(STATE.get("limit_per_source", DEFAULT_LIMIT_PER_SOURCE))
+    events = fetch_events(limit_per_source=limit_per_source)
     STATE["events"] = events
     STATE["last_refresh"] = datetime.now(timezone.utc).isoformat()
     tension = _compute_tension(events)
     _append_tension_history(tension, events)
+
+
+def _read_limit_per_source(query: dict[str, list[str]]) -> int:
+    raw = query.get("limit_per_source", [None])[0]
+    if not raw:
+        return int(STATE.get("limit_per_source", DEFAULT_LIMIT_PER_SOURCE))
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return int(STATE.get("limit_per_source", DEFAULT_LIMIT_PER_SOURCE))
+    return max(MIN_LIMIT_PER_SOURCE, min(MAX_LIMIT_PER_SOURCE, value))
 
 
 def _read_topic_filters(query: dict[str, list[str]]) -> list[str]:
@@ -159,10 +175,24 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.3.1",
+                    "version": "0.3.2",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
+                    "limit_per_source": STATE["limit_per_source"],
                     "topics": AVAILABLE_TOPICS,
+                }
+            )
+
+        if parsed.path == "/api/v1/refresh":
+            limit_per_source = _read_limit_per_source(query)
+            STATE["limit_per_source"] = limit_per_source
+            refresh_hotspots()
+            return self._json(
+                {
+                    "ok": True,
+                    "last_refresh": STATE["last_refresh"],
+                    "event_count": len(STATE["events"]),
+                    "limit_per_source": STATE["limit_per_source"],
                 }
             )
 
@@ -212,7 +242,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.3.1 已启动", flush=True)
+    print("Project GIGDIS alpha0.3.2 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

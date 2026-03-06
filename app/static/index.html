@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.3.1</title>
+    <title>Project GIGDIS alpha0.3.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; }
@@ -64,8 +64,8 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.3.1</div>
-      <div class="actions"><select id="lang-select"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.3.2</div>
+      <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
       <div class="map-column">
@@ -100,12 +100,13 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       const I18N = {
-        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', refreshEvery:'自动刷新', minutes:'分钟', refreshFailed:'刷新失败' },
-        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', refreshEvery:'Auto refresh', minutes:'min', refreshFailed:'Refresh failed' }
+        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', refreshNow:'手动刷新', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败' },
+        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', refreshNow:'Refresh now', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed' }
       };
       const TOPIC_LABELS = { military:{zh:'军事',en:'military'}, politics:{zh:'政治',en:'politics'}, technology:{zh:'科技',en:'technology'}, science:{zh:'科学',en:'science'}, disaster:{zh:'灾害',en:'disaster'}, 'public-health':{zh:'公共卫生',en:'public-health'}, diplomacy:{zh:'外交',en:'diplomacy'}, economy:{zh:'经济',en:'economy'}, general:{zh:'综合',en:'general'} };
-      const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes';
+      const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes', REFRESH_LIMIT_KEY='gigdis-refresh-limit';
       const REFRESH_CHOICES = [5,10,15,20,30,60];
+      const REFRESH_LIMIT_CHOICES = [10,20,30,40,60,80,100];
       const BUILTIN_TILES = [
         { id:'datetime', titleKey:'tileDatetime', render:() => ({ value: `${new Date().toLocaleDateString(currentLang)} ${new Date().toLocaleTimeString(currentLang,{hour12:false})}` }) },
         { id:'heatTrend', titleKey:'tileHeatTrend', render:(ctx) => ({ value:`${ctx.heatDelta > 0 ? '+' : ''}${ctx.heatDelta.toFixed(2)} ${t().perHour}`, sub:t().comparedToPrev, valueClass:trendClass(ctx.heatDelta) }) },
@@ -124,6 +125,7 @@
       let overviewHistory = { countries:[], events:[], hotness:[] };
       let panelSnapshot = {}, hotspotsSnapshot = {};
       let refreshMinutes = Number(localStorage.getItem(REFRESH_INTERVAL_KEY) || 15);
+      let refreshLimit = Number(localStorage.getItem(REFRESH_LIMIT_KEY) || 40);
       let refreshTimer = null;
       const externalCache = {};
 
@@ -220,12 +222,30 @@
         if (refreshTimer) clearInterval(refreshTimer);
         refreshTimer = setInterval(bootstrap, refreshMinutes * 60 * 1000);
       }
-      function setupRefreshInterval(){
+      function applyRefreshLimit(limit){
+        refreshLimit = REFRESH_LIMIT_CHOICES.includes(Number(limit)) ? Number(limit) : 40;
+        localStorage.setItem(REFRESH_LIMIT_KEY, String(refreshLimit));
+      }
+      function setupRefreshControls(){
         if (!REFRESH_CHOICES.includes(refreshMinutes)) refreshMinutes = 15;
-        const select = document.getElementById('refresh-interval');
-        select.innerHTML = REFRESH_CHOICES.map(min => `<option value="${min}" ${min===refreshMinutes?'selected':''}>${min}</option>`).join('');
-        select.addEventListener('change', (e) => applyRefreshInterval(Number(e.target.value)));
+        const intervalSelect = document.getElementById('refresh-interval');
+        intervalSelect.innerHTML = REFRESH_CHOICES.map(min => `<option value="${min}" ${min===refreshMinutes?'selected':''}>${min}</option>`).join('');
+        intervalSelect.addEventListener('change', (e) => applyRefreshInterval(Number(e.target.value)));
+
+        if (!REFRESH_LIMIT_CHOICES.includes(refreshLimit)) refreshLimit = 40;
+        const limitSelect = document.getElementById('refresh-limit');
+        limitSelect.innerHTML = REFRESH_LIMIT_CHOICES.map(count => `<option value="${count}" ${count===refreshLimit?'selected':''}>${count}</option>`).join('');
+        limitSelect.addEventListener('change', async (e) => {
+          applyRefreshLimit(Number(e.target.value));
+          await bootstrap(true);
+        });
+
+        document.getElementById('manual-refresh').addEventListener('click', async () => {
+          await bootstrap(true);
+        });
+
         applyRefreshInterval(refreshMinutes);
+        applyRefreshLimit(refreshLimit);
       }
       function syncTilePanelState(){ document.getElementById('tiles-panel').classList.toggle('collapsed', panelCollapsed); document.getElementById('tiles-toggle').textContent = panelCollapsed ? t().expand : t().collapse; }
       function syncSelectorState(){ document.getElementById('tile-selector').classList.toggle('expanded', selectorExpanded); document.getElementById('tile-selector-title').textContent = selectorExpanded ? t().hideSelector : t().tileSelector; document.getElementById('tile-selector-state').textContent = selectorExpanded ? '▲' : '▼'; }
@@ -267,8 +287,17 @@
       function topicQuery(){ return activeTopics.length ? `topics=${encodeURIComponent(activeTopics.join(','))}` : ''; }
       function initFilters(force=false){ const root = document.getElementById('topic-filters'); if (!force && root.childElementCount) return; root.innerHTML=''; ALL_TOPICS.forEach(topic => { const button = document.createElement('button'); button.type='button'; button.className='filter-button'; button.dataset.topic=topic; button.textContent=topicLabel(topic); if (activeTopics.includes(topic)) button.classList.add('active'); button.addEventListener('click', async () => { button.classList.toggle('active'); activeTopics=readSelectedTopics(); selectedCountry=null; await bootstrap(); }); root.appendChild(button); }); }
       async function loadPanel(country = null){ const params = []; if (country) params.push(`viewport_country=${encodeURIComponent(country)}`); const tq = topicQuery(); if (tq) params.push(tq); params.push(`lang=${encodeURIComponent(currentLang)}`); const panel = await fetch(`/api/v1/panel?${params.join('&')}`).then(r => r.json()); renderList(document.getElementById('global-list'), (panel.global_top || []).slice(0,8)); renderList(document.getElementById('viewport-list'), (panel.viewport_related || []).slice(0,8)); return panel; }
-      async function bootstrap(){
-        const params = []; const tq = topicQuery(); if (tq) params.push(tq); params.push(`lang=${encodeURIComponent(currentLang)}`);
+      async function bootstrap(forceServerRefresh = false){
+        const params = [];
+        const tq = topicQuery();
+        if (tq) params.push(tq);
+        params.push(`lang=${encodeURIComponent(currentLang)}`);
+
+        if (forceServerRefresh) {
+          const refreshResp = await fetch(`/api/v1/refresh?limit_per_source=${refreshLimit}`).then(r => r.json());
+          if (!refreshResp.ok) throw new Error(t().refreshFailed);
+        }
+
         const hotspots = await fetch(`/api/v1/hotspots?${params.join('&')}`).then(r => r.json());
         hotspotsSnapshot = hotspots || {};
         document.getElementById('refresh').textContent = `${t().lastRefresh}：${hotspots.last_refresh || 'N/A'}`;
@@ -306,7 +335,10 @@
         document.getElementById('tension-hotspots-title').textContent = t().hotspots; document.getElementById('tension-trend-title').textContent = t().trend;
         document.getElementById('global-title').textContent = t().globalTop; document.getElementById('viewport-title').textContent = t().viewport; document.getElementById('viewport-tip').textContent = t().viewportTip;
         document.getElementById('tiles-title').textContent = t().tiles; document.getElementById('refresh').textContent = t().loading;
+        document.getElementById('manual-refresh').textContent = t().refreshNow;
+        document.getElementById('refresh-limit-label').textContent = t().refreshCount;
         document.getElementById('refresh-interval-label').textContent = t().refreshEvery;
+        document.querySelectorAll('#refresh-limit option').forEach(opt => { opt.textContent = `${opt.value}${t().items}`; });
         document.querySelectorAll('#refresh-interval option').forEach(opt => { opt.textContent = `${opt.value}${t().minutes}`; });
         document.querySelectorAll('.kpi-toggle').forEach(btn => { const card = btn.closest('.kpi'); btn.textContent = card.classList.contains('expanded') ? t().detailCollapse : t().detailExpand; });
         syncSelectorState(); renderTileSettings(); syncTilePanelState(); applyTheme(currentTheme);
@@ -321,7 +353,7 @@
 
       (async function init(){
         setupLanguage();
-        setupRefreshInterval();
+        setupRefreshControls();
         await loadPluginTiles();
         rerenderStaticText();
         initFilters();

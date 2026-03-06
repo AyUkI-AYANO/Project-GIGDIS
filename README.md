@@ -1,6 +1,6 @@
-# Project GIGDIS (alpha0.3.1)
+# Project GIGDIS (alpha0.3.2)
 
-Project GIGDIS 是一个全球热点地图系统的 alpha0.3.1 版本。
+Project GIGDIS 是一个全球热点地图系统的 alpha0.3.2 版本。
 
 ## 本版本新增能力
 
@@ -14,6 +14,12 @@ Project GIGDIS 是一个全球热点地图系统的 alpha0.3.1 版本。
 
 ## Update Log
 
+
+### alpha0.3.2
+- 新增“手动刷新”按钮，用户可按需立即触发一次后端抓取与前端重载。
+- 新增“每次刷新新闻数”选择器（10/20/30/40/60/80/100 条），并持久化到本地存储。
+- 新增 `GET /api/v1/refresh?limit_per_source=40` 接口，支持前端传入每次抓取条数并立刻刷新数据。
+- `health` 接口补充 `limit_per_source` 字段，便于观测当前刷新配置。
 
 ### alpha0.3.1
 - 新增自动刷新时间选择：支持 5/10/15/20/30/60 分钟。
@@ -55,6 +61,7 @@ python app/main.py
 
 ## API
 
-- `GET /api/v1/health`：服务健康、版本、可用类型。
+- `GET /api/v1/health`：服务健康、版本、可用类型、当前每源抓取上限。
+- `GET /api/v1/refresh?limit_per_source=40`：手动触发一次刷新，并可指定每个信息源抓取条数（5-100）。
 - `GET /api/v1/hotspots?topics=technology,military&lang=en`：按类型筛选地图热点数据，并返回全球紧张度。
 - `GET /api/v1/panel?viewport_country=China&topics=politics,technology&lang=fr`：按国家+类型+语言筛选信息栏内容。
