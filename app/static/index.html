@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.1.0</title>
+    <title>Project GIGDIS alpha0.1.1</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -12,24 +12,36 @@
     />
     <style>
       body { margin: 0; font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; }
-      header { padding: 12px 16px; background: #1e293b; display: flex; justify-content: space-between; }
-      #map { height: 62vh; }
+      header { padding: 12px 16px; background: #1e293b; display: flex; justify-content: space-between; align-items: center; }
+      #map { height: 56vh; }
       .panel { padding: 12px 16px; background: #111827; }
       .meta { color: #93c5fd; font-size: 12px; }
       .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
       .card { background: #1f2937; border-radius: 8px; padding: 10px; }
       ul { margin: 8px 0 0; padding-left: 18px; }
       li { margin-bottom: 6px; }
+      .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .tag { background: #334155; border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+      .toolbar { margin-bottom: 10px; }
+      button { background: #0ea5e9; border: none; color: #fff; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
       @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
     </style>
   </head>
   <body>
     <header>
-      <strong>Project GIGDIS · alpha0.1.0</strong>
+      <strong>Project GIGDIS · alpha0.1.1</strong>
       <span id="refresh" class="meta">加载中...</span>
     </header>
     <div id="map"></div>
+
     <section class="panel">
+      <div class="toolbar card">
+        <h3 style="margin-top:0">新闻类型筛选</h3>
+        <div id="topic-filters" class="filters"></div>
+        <button id="apply-filters">应用筛选</button>
+        <span id="active-topics" class="meta" style="margin-left:10px">当前：全部</span>
+      </div>
+
       <div class="grid">
         <div class="card">
           <h3>全局 Top 5 热点</h3>
@@ -51,11 +63,41 @@
     <script>
       const map = L.map('map').setView([25, 10], 2);
       const markers = L.layerGroup().addTo(map);
+      let selectedCountry = null;
+      let activeTopics = [];
+
+      const ALL_TOPICS = ['military', 'politics', 'technology', 'science', 'disaster', 'public-health', 'diplomacy', 'economy', 'general'];
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 7,
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
+
+      function initFilters() {
+        const root = document.getElementById('topic-filters');
+        ALL_TOPICS.forEach(topic => {
+          const label = document.createElement('label');
+          label.className = 'tag';
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.value = topic;
+          input.style.marginRight = '6px';
+          label.appendChild(input);
+          label.appendChild(document.createTextNode(topic));
+          root.appendChild(label);
+        });
+      }
+
+      function readSelectedTopics() {
+        return [...document.querySelectorAll('#topic-filters input:checked')].map(el => el.value);
+      }
+
+      function topicQuery() {
+        if (!activeTopics.length) {
+          return '';
+        }
+        return `topics=${encodeURIComponent(activeTopics.join(','))}`;
+      }
 
       function renderList(el, items) {
         el.innerHTML = '';
@@ -71,15 +113,25 @@
       }
 
       async function loadPanel(country = null) {
-        const query = country ? `?viewport_country=${encodeURIComponent(country)}` : '';
+        const params = [];
+        if (country) {
+          params.push(`viewport_country=${encodeURIComponent(country)}`);
+        }
+        const tq = topicQuery();
+        if (tq) {
+          params.push(tq);
+        }
+        const query = params.length ? `?${params.join('&')}` : '';
         const panel = await fetch(`/api/v1/panel${query}`).then(r => r.json());
         renderList(document.getElementById('global-list'), panel.global_top);
         renderList(document.getElementById('viewport-list'), panel.viewport_related || []);
       }
 
       async function bootstrap() {
-        const hotspots = await fetch('/api/v1/hotspots').then(r => r.json());
+        const query = topicQuery();
+        const hotspots = await fetch(`/api/v1/hotspots${query ? `?${query}` : ''}`).then(r => r.json());
         document.getElementById('refresh').textContent = `上次刷新：${hotspots.last_refresh || 'N/A'}`;
+        document.getElementById('active-topics').textContent = `当前：${activeTopics.length ? activeTopics.join(', ') : '全部'}`;
 
         markers.clearLayers();
         hotspots.countries.forEach(country => {
@@ -90,14 +142,24 @@
             fillColor: '#fb923c',
             fillOpacity: 0.7
           });
-          marker.bindPopup(`<b>${country.country}</b><br/>事件数: ${country.event_count}<br/>热度: ${country.avg_hotness}`);
-          marker.on('click', () => loadPanel(country.country));
+          marker.bindPopup(`<b>${country.country}</b><br/>事件数: ${country.event_count}<br/>热度: ${country.avg_hotness}<br/>主类型: ${country.top_topic}`);
+          marker.on('click', () => {
+            selectedCountry = country.country;
+            loadPanel(selectedCountry);
+          });
           marker.addTo(markers);
         });
 
-        await loadPanel(null);
+        await loadPanel(selectedCountry);
       }
 
+      document.getElementById('apply-filters').addEventListener('click', async () => {
+        activeTopics = readSelectedTopics();
+        selectedCountry = null;
+        await bootstrap();
+      });
+
+      initFilters();
       bootstrap();
       setInterval(bootstrap, 15 * 60 * 1000);
     </script>

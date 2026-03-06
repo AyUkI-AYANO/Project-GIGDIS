@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS alpha0.1.0."""
+"""Data source definitions for Project GIGDIS alpha0.1.1."""
 
 RSS_SOURCES = [
     {
@@ -15,6 +15,11 @@ RSS_SOURCES = [
         "name": "Al Jazeera",
         "url": "https://www.aljazeera.com/xml/rss/all.xml",
         "credibility": 0.88,
+    },
+    {
+        "name": "Reuters Technology",
+        "url": "https://feeds.reuters.com/reuters/technologyNews",
+        "credibility": 0.93,
     },
 ]
 
@@ -57,9 +62,24 @@ COUNTRY_COORDS = {
 }
 
 TOPIC_KEYWORDS = {
-    "conflict": ["war", "strike", "attack", "missile", "military", "conflict"],
+    "military": ["war", "strike", "attack", "missile", "military", "conflict", "troop"],
+    "politics": ["election", "parliament", "government", "president", "prime minister", "policy"],
+    "technology": ["ai", "chip", "semiconductor", "software", "cyber", "tech", "startup"],
+    "science": ["space", "nasa", "research", "scientist", "laboratory", "climate"],
     "disaster": ["earthquake", "flood", "hurricane", "wildfire", "disaster"],
     "public-health": ["virus", "disease", "outbreak", "health emergency"],
     "diplomacy": ["summit", "talks", "diplomatic", "sanction", "treaty"],
-    "economy": ["inflation", "oil", "market", "trade", "economic"],
+    "economy": ["inflation", "oil", "market", "trade", "economic", "tariff"],
 }
+
+AVAILABLE_TOPICS = [
+    "military",
+    "politics",
+    "technology",
+    "science",
+    "disaster",
+    "public-health",
+    "diplomacy",
+    "economy",
+    "general",
+]

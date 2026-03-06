@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS alpha0.1.0."""
+"""Hotspot extraction pipeline for Project GIGDIS alpha0.1.1."""
 
 from __future__ import annotations
 
@@ -62,14 +62,14 @@ def _recency_score(published_at: datetime) -> float:
 
 
 def _severity_score(topic: str) -> float:
-    if topic == "conflict":
+    if topic == "military":
         return 1.0
     if topic in {"disaster", "public-health"}:
-        return 0.85
-    if topic == "diplomacy":
+        return 0.9
+    if topic in {"politics", "diplomacy"}:
+        return 0.75
+    if topic in {"technology", "science", "economy"}:
         return 0.65
-    if topic == "economy":
-        return 0.6
     return 0.5
 
 
@@ -104,10 +104,7 @@ def _fetch_rss_entries(url: str) -> list[dict]:
 
     for item in items:
         title = _find_child(item, ["title", "{http://www.w3.org/2005/Atom}title"])
-        summary = _find_child(
-            item,
-            ["description", "summary", "{http://www.w3.org/2005/Atom}summary"],
-        )
+        summary = _find_child(item, ["description", "summary", "{http://www.w3.org/2005/Atom}summary"])
         published = _find_child(
             item,
             [
@@ -123,19 +120,22 @@ def _fetch_rss_entries(url: str) -> list[dict]:
     return entries
 
 
-
-
 def _fallback_events() -> list[Event]:
     now = datetime.now(timezone.utc)
     samples = [
-        ("Ceasefire talks intensify in Middle East", "Israel", "diplomacy", "Demo Feed", 0.9),
-        ("Severe earthquake response underway", "Japan", "disaster", "Demo Feed", 0.9),
-        ("Trade negotiation round impacts markets", "China", "economy", "Demo Feed", 0.9),
+        ("Global AI summit announces new model safety pact", "United States", "technology", "Demo Feed", 0.9),
+        ("Regional defense exercise expands naval deployment", "Japan", "military", "Demo Feed", 0.9),
+        ("Parliament passes major digital governance bill", "United Kingdom", "politics", "Demo Feed", 0.9),
+        ("New climate research mission launched", "France", "science", "Demo Feed", 0.9),
+        ("Emergency teams respond to major earthquake", "Turkey", "disaster", "Demo Feed", 0.9),
     ]
     result = []
     for idx, (title, country, topic, source, credibility) in enumerate(samples, start=1):
         lat, lon = COUNTRY_COORDS[country]
-        hotness = round(100 * (0.35 * credibility + 0.25 * 0.95 + 0.20 * 0.6 + 0.20 * _severity_score(topic)), 2)
+        hotness = round(
+            100 * (0.35 * credibility + 0.25 * 0.95 + 0.20 * 0.6 + 0.20 * _severity_score(topic)),
+            2,
+        )
         result.append(
             Event(
                 event_id=_event_id(title, source + str(idx)),
@@ -175,13 +175,7 @@ def fetch_events(limit_per_source: int = 20) -> list[Event]:
             recency = _recency_score(published_at)
             severity = _severity_score(topic)
             hotness = round(
-                100
-                * (
-                    0.35 * source["credibility"]
-                    + 0.25 * recency
-                    + 0.20 * 0.7
-                    + 0.20 * severity
-                ),
+                100 * (0.35 * source["credibility"] + 0.25 * recency + 0.20 * 0.7 + 0.20 * severity),
                 2,
             )
             lat, lon = COUNTRY_COORDS[country]
@@ -205,6 +199,16 @@ def fetch_events(limit_per_source: int = 20) -> list[Event]:
     if deduped:
         return deduped
     return _fallback_events()
+
+
+def filter_events_by_topics(events: Iterable[Event], topics: list[str] | None) -> list[Event]:
+    event_list = list(events)
+    if not topics:
+        return event_list
+    allowed = {topic.strip().lower() for topic in topics if topic.strip()}
+    if not allowed:
+        return event_list
+    return [event for event in event_list if event.topic.lower() in allowed]
 
 
 def dedupe_events(events: Iterable[Event]) -> list[Event]:
@@ -246,9 +250,7 @@ def aggregate_by_country(events: Iterable[Event]) -> list[dict]:
     result = []
     for record in bucket.values():
         record["avg_hotness"] = round(record["avg_hotness"] / record["event_count"], 2)
-        record["top_events"] = sorted(
-            record["top_events"], key=lambda item: item["hotness"], reverse=True
-        )[:3]
+        record["top_events"] = sorted(record["top_events"], key=lambda item: item["hotness"], reverse=True)[:3]
         topic_count: dict[str, int] = {}
         for event in record["top_events"]:
             topic_count[event["topic"]] = topic_count.get(event["topic"], 0) + 1
