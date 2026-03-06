@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.4.1</title>
+    <title>Project GIGDIS alpha0.4.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; }
@@ -64,8 +64,8 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.4.1</div>
-      <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.4.2</div>
+      <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><label for="conflict-toggle" class="meta" id="conflict-toggle-label"></label><input id="conflict-toggle" type="checkbox" checked /><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
       <div class="map-column">
@@ -100,11 +100,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       const I18N = {
-        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', refreshNow:'手动刷新', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', conflictZones:'冲突地区', conflictIntensity:'冲突强度' },
-        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', refreshNow:'Refresh now', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', conflictZones:'Conflict zones', conflictIntensity:'Conflict intensity' }
+        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', refreshNow:'手动刷新', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', conflictZones:'冲突地区', conflictIntensity:'冲突强度', showConflictZones:'显示冲突地区' },
+        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', refreshNow:'Refresh now', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', conflictZones:'Conflict zones', conflictIntensity:'Conflict intensity', showConflictZones:'Show conflict zones' }
       };
       const TOPIC_LABELS = { military:{zh:'军事',en:'military'}, politics:{zh:'政治',en:'politics'}, technology:{zh:'科技',en:'technology'}, science:{zh:'科学',en:'science'}, disaster:{zh:'灾害',en:'disaster'}, 'public-health':{zh:'公共卫生',en:'public-health'}, diplomacy:{zh:'外交',en:'diplomacy'}, economy:{zh:'经济',en:'economy'}, general:{zh:'综合',en:'general'} };
-      const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes', REFRESH_LIMIT_KEY='gigdis-refresh-limit';
+      const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes', REFRESH_LIMIT_KEY='gigdis-refresh-limit', CONFLICT_TOGGLE_KEY='gigdis-show-conflict-zones';
       const REFRESH_CHOICES = [5,10,15,20,30,60];
       const REFRESH_LIMIT_CHOICES = [10,20,30,40,60,80,100];
       const BUILTIN_TILES = [
@@ -136,6 +136,7 @@
       let refreshMinutes = Number(localStorage.getItem(REFRESH_INTERVAL_KEY) || 15);
       let refreshLimit = Number(localStorage.getItem(REFRESH_LIMIT_KEY) || 40);
       let refreshTimer = null;
+      let showConflictZones = localStorage.getItem(CONFLICT_TOGGLE_KEY) !== 'false';
       const externalCache = {};
 
       function t(){ return I18N[currentLang] || I18N.zh; }
@@ -161,14 +162,25 @@
           radiusBase: Number(plugin.radiusBase || 6),
         };
       }
+      function buildConflictPolygon(lat, lon, intensity){
+        const scale = 4 + Math.max(0, Math.min(8, intensity / 12));
+        const latOffset = scale;
+        const lonOffset = scale * Math.max(0.6, Math.cos((lat * Math.PI) / 180));
+        return [
+          [lat - latOffset, lon - lonOffset],
+          [lat - latOffset * 0.25, lon + lonOffset],
+          [lat + latOffset, lon + lonOffset * 0.7],
+          [lat + latOffset * 0.45, lon - lonOffset],
+        ];
+      }
       function renderConflictZones(conflictZones){
         conflictMarkers.clearLayers();
+        if (!showConflictZones) return;
         (conflictZones || []).forEach(zone => {
           const intensity = Number(zone.intensity || 0);
-          const radius = 8 + Math.max(0, Math.min(16, intensity / 8));
-          const marker = L.circleMarker([zone.lat, zone.lon], { pane:'conflictPane', radius, color:'#f97316', fillColor:'#ef4444', fillOpacity:0.08, weight:2, dashArray:'4 3' });
-          marker.bindPopup(`<b>${t().conflictZones}｜${zone.country}</b><br/>${t().eventCount}: ${zone.event_count}<br/>${t().conflictIntensity}: ${Math.round(intensity)}${t().points}<br/>${zone.headline || ''}`);
-          marker.addTo(conflictMarkers);
+          const polygon = L.polygon(buildConflictPolygon(zone.lat, zone.lon, intensity), { pane:'conflictPane', color:'#dc2626', fillColor:'#ef4444', fillOpacity:0.28, weight:1.5 });
+          polygon.bindPopup(`<b>${t().conflictZones}｜${zone.country}</b><br/>${t().eventCount}: ${zone.event_count}<br/>${t().conflictIntensity}: ${Math.round(intensity)}${t().points}<br/>${zone.headline || ''}`);
+          polygon.addTo(conflictMarkers);
         });
       }
       function renderPluginMapMarkers(context){
@@ -398,6 +410,8 @@
         document.getElementById('manual-refresh').textContent = t().refreshNow;
         document.getElementById('refresh-limit-label').textContent = t().refreshCount;
         document.getElementById('refresh-interval-label').textContent = t().refreshEvery;
+        document.getElementById('conflict-toggle-label').textContent = t().showConflictZones;
+        document.getElementById('conflict-toggle').checked = showConflictZones;
         document.querySelectorAll('#refresh-limit option').forEach(opt => { opt.textContent = `${opt.value}${t().items}`; });
         document.querySelectorAll('#refresh-interval option').forEach(opt => { opt.textContent = `${opt.value}${t().minutes}`; });
         document.querySelectorAll('.kpi-toggle').forEach(btn => { const card = btn.closest('.kpi'); btn.textContent = card.classList.contains('expanded') ? t().detailCollapse : t().detailExpand; });
@@ -409,6 +423,7 @@
       document.getElementById('clear-filters').addEventListener('click', async () => { clearSelectedTopics(); activeTopics = []; selectedCountry = null; await bootstrap(); });
       document.getElementById('tiles-toggle').addEventListener('click', () => { panelCollapsed = !panelCollapsed; syncTilePanelState(); });
       document.getElementById('tile-selector-toggle').addEventListener('click', () => { selectorExpanded = !selectorExpanded; syncSelectorState(); });
+      document.getElementById('conflict-toggle').addEventListener('change', (e) => { showConflictZones = !!e.target.checked; localStorage.setItem(CONFLICT_TOGGLE_KEY, showConflictZones ? 'true' : 'false'); renderConflictZones((hotspotsSnapshot.conflict_zones || []).filter(zone => !selectedCountry || zone.country !== selectedCountry)); });
       document.querySelectorAll('.kpi-toggle').forEach(btn => btn.addEventListener('click', () => { const card = btn.closest('.kpi'); card.classList.toggle('expanded'); btn.textContent = card.classList.contains('expanded') ? t().detailCollapse : t().detailExpand; }));
 
       (async function init(){
