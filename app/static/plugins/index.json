@@ -3,7 +3,5 @@
     "tiles/risk-summary.plugin.json",
     "tiles/web-quote.plugin.json"
   ],
-  "map_markers": [
-    "map-markers/conflict-focus.plugin.json"
-  ]
+  "map_markers": []
 }
