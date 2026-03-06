@@ -1,9 +1,14 @@
-# Project GIGDIS (alpha0.4.0)
+# Project GIGDIS (alpha0.4.1)
 
-Project GIGDIS 是一个全球热点地图系统的 alpha0.4.0 版本。
+Project GIGDIS 是一个全球热点地图系统的 alpha0.4.1 版本。
 
 
 ## Update Log
+
+
+### alpha0.4.1
+- 统一版本号为 `alpha0.4.1`：同步服务端、前端标题/页眉、文档与模块注释，避免版本展示不一致。
+- 补充并更新 README 版本说明与更新日志，便于发布追踪。
 
 
 ### alpha0.4.0
