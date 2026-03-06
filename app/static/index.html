@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS beta1.0</title>
+    <title>Project GIGDIS beta1.1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; --button-bg:#0284c7; }
@@ -64,7 +64,7 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta1.0</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta1.1</div>
       <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
@@ -130,7 +130,7 @@
       let tileRegistry = [...BUILTIN_TILES], tileConfig = loadTileConfig();
       let mapMarkerPlugins = [];
       let themePlugins = [];
-      let activeThemePlugin = localStorage.getItem(THEME_PLUGIN_KEY) || '';
+      let activeThemePlugin = localStorage.getItem(THEME_PLUGIN_KEY) || 'blackGreenBuiltinTheme';
       let overviewHistory = { countries:[], events:[], hotness:[] };
       let panelSnapshot = {}, hotspotsSnapshot = {};
       let refreshMinutes = Number(localStorage.getItem(REFRESH_INTERVAL_KEY) || 15);

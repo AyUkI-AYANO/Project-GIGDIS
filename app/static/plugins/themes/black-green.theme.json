@@ -1,0 +1,23 @@
+{
+  "id": "blackGreenBuiltinTheme",
+  "type": "theme",
+  "title": {
+    "zh": "黑绿战术主题",
+    "en": "Black Green Tactical"
+  },
+  "backgroundImage": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Crect width='16' height='16' fill='%23000000'/%3E%3C/svg%3E",
+  "variables": {
+    "--bg": "#000000",
+    "--text": "#b9ffb9",
+    "--header-bg": "#051105",
+    "--header-border": "#1f7a1f",
+    "--card-bg": "rgba(0, 18, 0, 0.9)",
+    "--card-border": "#2b8f2b",
+    "--tag-bg": "rgba(12, 45, 12, 0.9)",
+    "--tag-border": "#32a532",
+    "--meta-text": "#7cff7c",
+    "--kpi-bg": "rgba(8, 32, 8, 0.92)",
+    "--link-color": "#57ff57",
+    "--button-bg": "#1f8f1f"
+  }
+}
