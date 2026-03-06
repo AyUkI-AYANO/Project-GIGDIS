@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS beta1.0."""
+"""Data source definitions for Project GIGDIS beta1.1."""
 
 RSS_SOURCES = [
     {

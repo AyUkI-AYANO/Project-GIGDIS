@@ -5,6 +5,7 @@
   ],
   "map_markers": [],
   "themes": [
+    "themes/black-green.theme.json",
     "themes/ocean-public.theme.json"
   ]
 }
