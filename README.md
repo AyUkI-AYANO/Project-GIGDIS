@@ -1,10 +1,16 @@
-# Project GIGDIS (alpha0.4.2)
+# Project GIGDIS (alpha0.4.3)
 
-Project GIGDIS 是一个全球热点地图系统的 alpha0.4.2 版本。
+Project GIGDIS 是一个全球热点地图系统的 alpha0.4.3 版本。
 
 
 ## Update Log
 
+
+
+### alpha0.4.3
+- 取消冲突事件同心圆点标记：插件清单移除冲突 map-marker，避免与国家新闻点重叠导致点击困难。
+- 冲突地区可视化改为小型红色闪烁方块，保持冲突提示能力，同时尽量不遮挡已有国家新闻标记。
+- 同步升级版本号到 `alpha0.4.3`（服务端、前端标题/页眉、模块注释、README）。
 
 ### alpha0.4.2
 - 冲突地区可视化改为红色半透明覆盖多边形，强调受影响范围而非单点圈标记。
