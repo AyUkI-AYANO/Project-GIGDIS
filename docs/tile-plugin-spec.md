@@ -1,4 +1,4 @@
-# Plugin 规范（alpha0.4.0）
+# Plugin 规范（alpha0.4.1）
 
 本文档说明 Project GIGDIS 的插件体系（磁贴插件 + 地图标记插件）。
 
