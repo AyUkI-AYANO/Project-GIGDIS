@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS alpha0.1.1."""
+"""Hotspot extraction pipeline for Project GIGDIS alpha0.1.2."""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ from urllib.request import urlopen
 import xml.etree.ElementTree as ET
 
 from sources import COUNTRY_COORDS, COUNTRY_KEYWORDS, RSS_SOURCES, TOPIC_KEYWORDS
+
+MIN_EVENTS_PER_TOPIC = 3
 
 
 @dataclass
@@ -128,6 +130,10 @@ def _fallback_events() -> list[Event]:
         ("Parliament passes major digital governance bill", "United Kingdom", "politics", "Demo Feed", 0.9),
         ("New climate research mission launched", "France", "science", "Demo Feed", 0.9),
         ("Emergency teams respond to major earthquake", "Turkey", "disaster", "Demo Feed", 0.9),
+        ("Cross-border diplomacy talks resume after summit", "Egypt", "diplomacy", "Demo Feed", 0.9),
+        ("WHO backs emergency vaccination corridor", "India", "public-health", "Demo Feed", 0.9),
+        ("Oil market volatility triggers inflation concern", "Saudi Arabia", "economy", "Demo Feed", 0.9),
+        ("City infrastructure upgrade accelerates", "Germany", "general", "Demo Feed", 0.9),
     ]
     result = []
     for idx, (title, country, topic, source, credibility) in enumerate(samples, start=1):
@@ -152,6 +158,97 @@ def _fallback_events() -> list[Event]:
             )
         )
     return result
+
+
+def _inject_topic_coverage(events: list[Event]) -> list[Event]:
+    counts: dict[str, int] = {}
+    for event in events:
+        counts[event.topic] = counts.get(event.topic, 0) + 1
+
+    now = datetime.now(timezone.utc)
+    synthetic: list[Event] = []
+    topic_templates = {
+        "military": [
+            ("Joint patrol activity raises regional alert", "South Korea"),
+            ("Border security forces conduct readiness drill", "Ukraine"),
+            ("Defense ministry reports missile interception", "Israel"),
+        ],
+        "politics": [
+            ("Coalition talks intensify ahead of leadership vote", "Italy"),
+            ("Constitutional reform debate reaches final stage", "Spain"),
+            ("Cabinet reshuffle signals policy pivot", "Canada"),
+        ],
+        "technology": [
+            ("Semiconductor investment plan expands manufacturing", "China"),
+            ("Cybersecurity agency warns of coordinated attacks", "Australia"),
+            ("Cloud platform launch targets enterprise AI", "United States"),
+        ],
+        "science": [
+            ("Space telescope captures deep-field anomalies", "France"),
+            ("Polar climate study confirms rapid ice decline", "United Kingdom"),
+            ("Gene-editing trial enters larger phase", "Germany"),
+        ],
+        "disaster": [
+            ("Heavy flooding displaces thousands after storms", "Brazil"),
+            ("Wildfire containment efforts expand overnight", "Australia"),
+            ("Volcanic activity prompts evacuation alerts", "Indonesia"),
+        ],
+        "public-health": [
+            ("Health ministry expands outbreak screening program", "India"),
+            ("Regional hospitals increase respiratory ward capacity", "United Kingdom"),
+            ("Cross-border disease surveillance network upgraded", "South Africa"),
+        ],
+        "diplomacy": [
+            ("Trilateral summit outlines de-escalation roadmap", "Egypt"),
+            ("Mediated talks produce prisoner exchange framework", "Turkey"),
+            ("Foreign ministers agree on sanctions review process", "Saudi Arabia"),
+        ],
+        "economy": [
+            ("Central bank holds rates amid inflation pressure", "Mexico"),
+            ("Trade corridor agreement boosts export forecasts", "China"),
+            ("Energy subsidy reforms trigger market repricing", "Japan"),
+        ],
+        "general": [
+            ("Major transport hub reopens after upgrades", "Saudi Arabia"),
+            ("Nationwide infrastructure package enters rollout", "Canada"),
+            ("Education reform bill receives cross-party support", "Brazil"),
+        ],
+    }
+
+    for topic, templates in topic_templates.items():
+        existing = counts.get(topic, 0)
+        required = max(0, MIN_EVENTS_PER_TOPIC - existing)
+        if not required:
+            continue
+        for idx, (title, country) in enumerate(templates[:required], start=1):
+            if country not in COUNTRY_COORDS:
+                continue
+            lat, lon = COUNTRY_COORDS[country]
+            source = "Synthetic Coverage"
+            credibility = 0.7
+            hotness = round(
+                100 * (0.35 * credibility + 0.25 * 0.92 + 0.20 * 0.65 + 0.20 * _severity_score(topic)),
+                2,
+            )
+            synthetic.append(
+                Event(
+                    event_id=_event_id(f"{title}-{topic}-{idx}", source),
+                    title=title,
+                    summary=title,
+                    source=source,
+                    source_credibility=credibility,
+                    published_at=now,
+                    country=country,
+                    lat=lat,
+                    lon=lon,
+                    topic=topic,
+                    hotness=hotness,
+                )
+            )
+
+    if not synthetic:
+        return events
+    return events + synthetic
 
 
 def fetch_events(limit_per_source: int = 20) -> list[Event]:
@@ -196,9 +293,9 @@ def fetch_events(limit_per_source: int = 20) -> list[Event]:
             )
 
     deduped = dedupe_events(events)
-    if deduped:
-        return deduped
-    return _fallback_events()
+    if not deduped:
+        deduped = _fallback_events()
+    return dedupe_events(_inject_topic_coverage(deduped))
 
 
 def filter_events_by_topics(events: Iterable[Event], topics: list[str] | None) -> list[Event]:
@@ -269,7 +366,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
             "topic": event.topic,
             "source": event.source,
         }
-        for event in events[:5]
+        for event in events[:8]
     ]
 
     viewport_related = []
@@ -284,7 +381,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
             }
             for event in events
             if event.country.lower() == viewport_country.lower()
-        ][:5]
+        ][:8]
 
     return {
         "global_top": global_top,
