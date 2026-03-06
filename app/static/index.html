@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS alpha0.2.0</title>
+    <title>Project GIGDIS alpha0.2.1</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -12,21 +12,44 @@
     />
     <style>
       :root {
-        color-scheme: dark;
+        --bg: #0b1220;
+        --text: #e2e8f0;
+        --header-bg: #111b30;
+        --header-border: #22314f;
+        --card-bg: #111827;
+        --card-border: #273449;
+        --tag-bg: #1e293b;
+        --tag-border: #334155;
+        --meta-text: #93c5fd;
+        --kpi-bg: #0f172a;
+        --link-color: #7dd3fc;
+      }
+      body[data-theme='light'] {
+        --bg: #f1f5f9;
+        --text: #0f172a;
+        --header-bg: #e2e8f0;
+        --header-border: #cbd5e1;
+        --card-bg: #ffffff;
+        --card-border: #d1d5db;
+        --tag-bg: #f1f5f9;
+        --tag-border: #cbd5e1;
+        --meta-text: #334155;
+        --kpi-bg: #f8fafc;
+        --link-color: #0369a1;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
         font-family: "Segoe UI", Arial, sans-serif;
-        background: #0b1220;
-        color: #e2e8f0;
+        background: var(--bg);
+        color: var(--text);
         height: 100vh;
         overflow: hidden;
       }
       header {
         padding: 14px 20px;
-        background: #111b30;
-        border-bottom: 1px solid #22314f;
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--header-border);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -50,7 +73,7 @@
         background: radial-gradient(circle at 30% 30%, #22d3ee 0%, #2563eb 45%, #1e1b4b 100%);
         box-shadow: 0 0 16px rgba(34, 211, 238, 0.3);
       }
-      .meta { color: #93c5fd; font-size: 12px; }
+      .meta { color: var(--meta-text); font-size: 12px; }
       .layout {
         display: grid;
         grid-template-columns: minmax(320px, 2fr) minmax(320px, 1fr);
@@ -62,7 +85,7 @@
         height: 100%;
         border-radius: 10px;
         overflow: hidden;
-        border: 1px solid #22314f;
+        border: 1px solid var(--header-border);
         position: sticky;
         top: 0;
       }
@@ -74,8 +97,8 @@
         padding-right: 4px;
       }
       .card {
-        background: #111827;
-        border: 1px solid #273449;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
         border-radius: 10px;
         padding: 12px;
       }
@@ -87,8 +110,8 @@
         margin: 10px 0;
       }
       .tag {
-        background: #1e293b;
-        border: 1px solid #334155;
+        background: var(--tag-bg);
+        border: 1px solid var(--tag-border);
         border-radius: 999px;
         padding: 4px 10px;
         font-size: 12px;
@@ -111,18 +134,19 @@
       }
       ul { margin: 0; padding-left: 18px; }
       li { margin-bottom: 8px; line-height: 1.35; }
+      li a { color: var(--link-color); margin-left: 6px; }
       .kpis {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
       }
       .kpi {
-        background: #0f172a;
-        border: 1px solid #273449;
+        background: var(--kpi-bg);
+        border: 1px solid var(--card-border);
         border-radius: 8px;
         padding: 8px;
       }
-      .kpi .label { font-size: 11px; color: #94a3b8; }
+      .kpi .label { font-size: 11px; color: var(--meta-text); }
       .kpi .value { font-weight: 700; margin-top: 4px; }
       @media (max-width: 1100px) {
         body { overflow: auto; }
@@ -132,10 +156,13 @@
       }
     </style>
   </head>
-  <body>
+  <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.0</div>
-      <span id="refresh" class="meta">加载中...</span>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · alpha0.2.1</div>
+      <div class="actions">
+        <button id="toggle-theme" class="secondary">切换为浅色地图</button>
+        <span id="refresh" class="meta">加载中...</span>
+      </div>
     </header>
 
     <main class="layout">
@@ -179,17 +206,41 @@
       crossorigin=""
     ></script>
     <script>
+      const THEME_KEY = 'gigdis-theme';
       const map = L.map('map').setView([25, 10], 2);
+      const tileLayers = {
+        light: L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 7,
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        }),
+        dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 7,
+          attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        })
+      };
+      let currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
+      let activeTileLayer = null;
+
       const markers = L.layerGroup().addTo(map);
       let selectedCountry = null;
       let activeTopics = [];
 
       const ALL_TOPICS = ['military', 'politics', 'technology', 'science', 'disaster', 'public-health', 'diplomacy', 'economy', 'general'];
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 7,
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
+      function applyTheme(theme) {
+        currentTheme = theme === 'light' ? 'light' : 'dark';
+        document.body.dataset.theme = currentTheme;
+        localStorage.setItem(THEME_KEY, currentTheme);
+
+        if (activeTileLayer) {
+          map.removeLayer(activeTileLayer);
+        }
+        activeTileLayer = tileLayers[currentTheme];
+        activeTileLayer.addTo(map);
+
+        const button = document.getElementById('toggle-theme');
+        button.textContent = currentTheme === 'dark' ? '切换为浅色地图' : '切换为深色地图';
+      }
 
       function initFilters() {
         const root = document.getElementById('topic-filters');
@@ -231,7 +282,16 @@
         }
         items.forEach(item => {
           const li = document.createElement('li');
-          li.textContent = `${item.country}｜${item.topic}｜${item.hotness}分｜${item.title}`;
+          const text = document.createTextNode(`${item.country}｜${item.topic}｜${item.hotness}分｜${item.title}`);
+          li.appendChild(text);
+          if (item.link) {
+            const link = document.createElement('a');
+            link.href = item.link;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = '查看原文';
+            li.appendChild(link);
+          }
           el.appendChild(li);
         });
       }
@@ -310,6 +370,10 @@
         await loadPanel(selectedCountry);
       }
 
+      document.getElementById('toggle-theme').addEventListener('click', () => {
+        applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+      });
+
       document.getElementById('apply-filters').addEventListener('click', async () => {
         activeTopics = readSelectedTopics();
         selectedCountry = null;
@@ -324,6 +388,7 @@
       });
 
       initFilters();
+      applyTheme(currentTheme);
       bootstrap();
       setInterval(bootstrap, 15 * 60 * 1000);
     </script>
