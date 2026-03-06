@@ -3,5 +3,8 @@
     "tiles/risk-summary.plugin.json",
     "tiles/web-quote.plugin.json"
   ],
-  "map_markers": []
+  "map_markers": [],
+  "themes": [
+    "themes/ocean-public.theme.json"
+  ]
 }

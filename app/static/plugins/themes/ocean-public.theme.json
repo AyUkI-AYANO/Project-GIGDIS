@@ -1,0 +1,23 @@
+{
+  "id": "oceanPublicTheme",
+  "type": "theme",
+  "title": {
+    "zh": "海洋公测主题",
+    "en": "Ocean public beta"
+  },
+  "backgroundImage": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1600&q=80",
+  "variables": {
+    "--bg": "#020617",
+    "--text": "#e0f2fe",
+    "--header-bg": "#082f49",
+    "--header-border": "#0369a1",
+    "--card-bg": "rgba(8,47,73,0.78)",
+    "--card-border": "#0ea5e9",
+    "--tag-bg": "rgba(2,132,199,0.28)",
+    "--tag-border": "#38bdf8",
+    "--meta-text": "#bae6fd",
+    "--kpi-bg": "rgba(3,105,161,0.25)",
+    "--link-color": "#7dd3fc",
+    "--button-bg": "#0ea5e9"
+  }
+}
