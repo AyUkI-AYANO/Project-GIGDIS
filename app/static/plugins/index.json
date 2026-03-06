@@ -1,0 +1,5 @@
+{
+  "plugins": [
+    "risk-summary.plugin.json"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "riskSummary",
+  "type": "metric",
+  "title": {
+    "zh": "风险摘要插件",
+    "en": "Risk summary plugin"
+  },
+  "valueTemplate": {
+    "zh": "紧张度 {tensionScore} 分",
+    "en": "Tension {tensionScore} pts"
+  },
+  "subTemplate": {
+    "zh": "热度变化 {heatDelta} /h",
+    "en": "Heat delta {heatDelta} /h"
+  }
+}

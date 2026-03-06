@@ -1,9 +1,10 @@
-"""Project GIGDIS alpha0.2.5 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS alpha0.3.0 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import mimetypes
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -123,6 +124,27 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _serve_static(self, relative_path: str) -> None:
+        safe_path = relative_path.lstrip("/")
+        file_path = (STATIC_DIR / safe_path).resolve()
+        try:
+            file_path.relative_to(STATIC_DIR)
+        except ValueError:
+            self._json({"error": "Forbidden"}, status=403)
+            return
+
+        if not file_path.exists() or not file_path.is_file():
+            self._json({"error": "Not Found"}, status=404)
+            return
+
+        content_type, _ = mimetypes.guess_type(str(file_path))
+        data = file_path.read_bytes()
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", f"{content_type or 'application/octet-stream'}; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
         query = parse_qs(parsed.query)
@@ -130,11 +152,14 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/":
             return self._serve_index()
 
+        if parsed.path.startswith("/plugins/"):
+            return self._serve_static(parsed.path)
+
         if parsed.path == "/api/v1/health":
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "0.2.5",
+                    "version": "0.3.0",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "topics": AVAILABLE_TOPICS,
@@ -187,7 +212,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS alpha0.2.5 已启动", flush=True)
+    print("Project GIGDIS alpha0.3.0 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

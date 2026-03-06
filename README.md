@@ -1,6 +1,6 @@
-# Project GIGDIS (alpha0.2.5)
+# Project GIGDIS (alpha0.3.0)
 
-Project GIGDIS 是一个全球热点地图系统的 alpha0.2.5 版本。
+Project GIGDIS 是一个全球热点地图系统的 alpha0.3.0 版本。
 
 ## 本版本新增能力
 
@@ -14,6 +14,12 @@ Project GIGDIS 是一个全球热点地图系统的 alpha0.2.5 版本。
 
 ## Update Log
 
+
+### alpha0.3.0
+- 数据概览四项指标均支持“展开/折叠详情”，补充主要国家列表与每小时变化小图，避免单卡过长。
+- 底部磁贴选择改为“展开列表”模式，支持更多磁贴项。
+- 新增磁贴插件能力：`app/static/plugins/` 下通过 JSON 插件即可扩展磁贴。
+- 新增插件规范文档：`docs/tile-plugin-spec.md`。
 
 ### alpha0.2.5
 - 取消“全球紧张度”鼠标悬浮窗，将热点区域与趋势图整合进概览卡片内。
