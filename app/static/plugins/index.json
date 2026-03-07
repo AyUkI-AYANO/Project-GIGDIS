@@ -7,6 +7,8 @@
   ],
   "themes": [
     "themes/black-green.theme.json",
-    "themes/ocean-public.theme.json"
+    "themes/ocean-public.theme.json",
+    "themes/aurora-neon.theme.json",
+    "themes/sand-dune.theme.json"
   ]
 }
