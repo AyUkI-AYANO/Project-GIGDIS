@@ -1,10 +1,17 @@
-# Project GIGDIS (beta3.4)
+# Project GIGDIS (beta4.0)
 
-Project GIGDIS 是一个全球热点地图系统的 beta3.4 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta4.0 迭代版本。
 
 
 ## Update Log
 
+
+
+### beta4.0
+- 强化“查看来源”聚合：每条热点新闻会在原始来源之外，自动补充同国家同主题的其他可参考来源（最多 4 条），便于横向对照。
+- 热点列表新增“新闻类型彩色标签”：政治、军事、科技等不同主题会显示不同颜色标记，提升阅读辨识度。
+- 扩展“非中立媒体”来源池：新增 The American Conservative、Jacobin、WSWS 等来源，并支持在政治倾向中标注“极右翼 / 极左翼”。
+- 全量同步版本号为 `beta4.0`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释）。
 
 
 ### beta3.4

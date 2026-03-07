@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS beta3.4."""
+"""Data source definitions for Project GIGDIS beta4.0."""
 
 SOURCE_TYPES = {
     "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
@@ -9,6 +9,8 @@ SOURCE_TYPES = {
 POLITICAL_LEANINGS = {
     "left": {"zh": "左翼", "en": "Left"},
     "right": {"zh": "右翼", "en": "Right"},
+    "far_left": {"zh": "极左翼", "en": "Far-left"},
+    "far_right": {"zh": "极右翼", "en": "Far-right"},
     "center": {"zh": "中立", "en": "Center"},
     "mixed": {"zh": "混合", "en": "Mixed"},
 }
@@ -16,6 +18,8 @@ POLITICAL_LEANINGS = {
 POLITICAL_LEANING_COLORS = {
     "left": "#3b82f6",
     "right": "#ef4444",
+    "far_left": "#1d4ed8",
+    "far_right": "#7f1d1d",
     "center": "#10b981",
     "mixed": "#a855f7",
 }
@@ -49,6 +53,9 @@ RSS_SOURCES = [
     {"name": "Breitbart World", "url": "https://www.breitbart.com/feed/", "credibility": 0.58, "type": "non_neutral"},
     {"name": "Egypt Today", "url": "https://www.egypttoday.com/Home/RSS?CategoryId=1", "credibility": 0.66, "type": "non_neutral"},
     {"name": "Sahara Reporters", "url": "https://saharareporters.com/feeds/latest/feed.xml", "credibility": 0.61, "type": "non_neutral"},
+    {"name": "The American Conservative", "url": "https://www.theamericanconservative.com/feed/", "credibility": 0.57, "type": "non_neutral"},
+    {"name": "Jacobin", "url": "https://jacobin.com/feed", "credibility": 0.60, "type": "non_neutral"},
+    {"name": "WSWS", "url": "https://www.wsws.org/en/rss.xml", "credibility": 0.55, "type": "non_neutral"},
 ]
 
 SOURCE_PROFILES = {
@@ -73,6 +80,9 @@ SOURCE_PROFILES = {
     "Fox": {"outlet": "Fox News", "political_leaning": "right"},
     "RT": {"outlet": "RT", "political_leaning": "right"},
     "Breitbart": {"outlet": "Breitbart", "political_leaning": "right"},
+    "The American Conservative": {"outlet": "The American Conservative", "political_leaning": "far_right"},
+    "Jacobin": {"outlet": "Jacobin", "political_leaning": "far_left"},
+    "WSWS": {"outlet": "WSWS", "political_leaning": "far_left"},
     "Egypt Today": {"outlet": "Egypt Today", "political_leaning": "mixed"},
     "Sahara Reporters": {"outlet": "Sahara Reporters", "political_leaning": "mixed"},
     "Demo Feed": {"outlet": "Demo Feed", "political_leaning": "center"},
