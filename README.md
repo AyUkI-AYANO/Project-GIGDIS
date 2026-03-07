@@ -1,10 +1,16 @@
-# Project GIGDIS (beta3.2)
+# Project GIGDIS (beta3.3)
 
-Project GIGDIS 是一个全球热点地图系统的 beta3.2 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta3.3 迭代版本。
 
 
 ## Update Log
 
+
+
+### beta3.3
+- 将示例插件 `source-bridge.plugin.json` 的默认桥接源从 Reuters 调整为 **BBC World**，并同步更新中英文文案为 “BBC 聚焦”，降低因单一源不可用导致的空数据显示概率。
+- 设置菜单新增“地图标记样式”选项，支持在 **热度渐变 / 脉冲高亮 / 极简圆环** 三种国家标记样式间切换，且会持久化用户偏好。
+- 全量同步版本号为 `beta3.3`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释）。
 
 ### beta3.2
 - 修复示例插件 `source-bridge.plugin.json` 仍显示字段名（如 `sourceHeadline/sourceCountry`）的问题：模板参数解析器现会将未命中的路径参数按空值处理，避免把变量名当作字面量回填到卡片文案中。

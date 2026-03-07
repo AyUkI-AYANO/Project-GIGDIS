@@ -6,8 +6,8 @@
     "en": "Source bridge"
   },
   "valueTemplate": {
-    "zh": "路透聚焦：{truncate:sourceHeadline|48}",
-    "en": "Reuters focus: {truncate:sourceHeadline|48}"
+    "zh": "BBC聚焦：{truncate:sourceHeadline|48}",
+    "en": "BBC focus: {truncate:sourceHeadline|48}"
   },
   "subTemplate": {
     "zh": "条目数 {sourceCount} ｜ 国家 {default:sourceCountry|'暂无'}",
@@ -16,21 +16,21 @@
   "externalSources": [
     {
       "key": "sourceHeadline",
-      "sourceApi": "Reuters",
+      "sourceApi": "BBC World",
       "responseType": "json",
       "path": "items.0.title",
       "ttlSeconds": 300
     },
     {
       "key": "sourceCountry",
-      "sourceApi": "Reuters",
+      "sourceApi": "BBC World",
       "responseType": "json",
       "path": "items.0.country",
       "ttlSeconds": 300
     },
     {
       "key": "sourceCount",
-      "sourceApi": "Reuters",
+      "sourceApi": "BBC World",
       "responseType": "json",
       "path": "count",
       "ttlSeconds": 300
