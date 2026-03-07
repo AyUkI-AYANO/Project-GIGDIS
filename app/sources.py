@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS beta4.1."""
+"""Data source definitions for Project GIGDIS beta4.2."""
 
 SOURCE_TYPES = {
     "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
@@ -91,8 +91,15 @@ SOURCE_PROFILES = {
 
 
 def get_source_profile(source_name: str) -> dict[str, str]:
-    for keyword, profile in SOURCE_PROFILES.items():
-        if keyword.lower() in source_name.lower():
+    normalized_source_name = source_name.lower()
+    for keyword, profile in sorted(SOURCE_PROFILES.items(), key=lambda item: len(item[0]), reverse=True):
+        normalized_keyword = keyword.lower()
+        if (
+            normalized_source_name == normalized_keyword
+            or normalized_source_name.startswith(f"{normalized_keyword} ")
+            or normalized_source_name.endswith(f" {normalized_keyword}")
+            or f" {normalized_keyword} " in normalized_source_name
+        ):
             return {
                 "outlet": profile["outlet"],
                 "political_leaning": profile["political_leaning"],

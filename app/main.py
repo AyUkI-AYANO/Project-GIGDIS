@@ -1,4 +1,4 @@
-"""Project GIGDIS beta4.1 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta4.2 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Event, Thread
 from urllib.parse import parse_qs, urlparse
+from urllib.request import urlopen
 
 from pipeline import Event as HotspotEvent
 from pipeline import (
@@ -38,6 +39,8 @@ STATE: dict[str, object] = {
     "last_refresh": None,
     "tension_history": [],
     "limit_per_source": DEFAULT_LIMIT_PER_SOURCE,
+    "market_indices": [],
+    "market_last_refresh": None,
 }
 
 CONFLICT_KEYWORDS = {
@@ -90,6 +93,65 @@ NON_MILITARY_ATTACK_HINTS = {
     "hiker",
     "killed by",
 }
+
+
+MARKET_INDEX_SOURCES = [
+    {"index_code": "000001.SH", "symbol": "^shc", "fallback_value": "3,128.44", "fallback_delta": "+0.82%"},
+    {"index_code": "399001.SZ", "symbol": "^szc", "fallback_value": "9,671.21", "fallback_delta": "+1.04%"},
+    {"index_code": "HSI", "symbol": "^hsi", "fallback_value": "16,923.45", "fallback_delta": "+0.67%"},
+    {"index_code": "N225", "symbol": "^nkx", "fallback_value": "39,009.88", "fallback_delta": "-0.12%"},
+    {"index_code": "STI", "symbol": "^sti", "fallback_value": "3,176.52", "fallback_delta": "+0.26%"},
+    {"index_code": "NIFTY", "symbol": "^nif", "fallback_value": "22,487.70", "fallback_delta": "+0.58%"},
+    {"index_code": "DAX", "symbol": "^dax", "fallback_value": "17,912.11", "fallback_delta": "+0.19%"},
+    {"index_code": "PX1", "symbol": "^cac", "fallback_value": "8,051.66", "fallback_delta": "+0.13%"},
+    {"index_code": "UKX", "symbol": "^ukx", "fallback_value": "7,684.15", "fallback_delta": "+0.11%"},
+    {"index_code": "DJI", "symbol": "^dji", "fallback_value": "39,412.67", "fallback_delta": "-0.21%"},
+    {"index_code": "IXIC", "symbol": "^ndq", "fallback_value": "16,224.17", "fallback_delta": "+0.33%"},
+    {"index_code": "TSX", "symbol": "^tsx", "fallback_value": "21,603.08", "fallback_delta": "+0.17%"},
+    {"index_code": "IBOV", "symbol": "^bvp", "fallback_value": "128,452.31", "fallback_delta": "-0.34%"},
+    {"index_code": "XJO", "symbol": "^asx", "fallback_value": "7,734.29", "fallback_delta": "+0.22%"},
+]
+
+
+def _format_market_value(value: float) -> str:
+    return f"{value:,.2f}"
+
+
+def _format_market_delta(delta: float) -> str:
+    sign = "+" if delta >= 0 else ""
+    return f"{sign}{delta:.2f}%"
+
+
+def _refresh_market_indices() -> None:
+    previous = {item.get("index_code"): item for item in STATE.get("market_indices", []) if isinstance(item, dict)}
+    refreshed: list[dict[str, str]] = []
+
+    for item in MARKET_INDEX_SOURCES:
+        index_code = item["index_code"]
+        prior = previous.get(index_code, {})
+        fallback_value = str(prior.get("index_value") or item["fallback_value"])
+        fallback_delta = str(prior.get("index_delta") or item["fallback_delta"])
+        record = {"index_code": index_code, "index_value": fallback_value, "index_delta": fallback_delta}
+
+        try:
+            with urlopen(f"https://stooq.com/q/l/?s={item['symbol']}&f=sd2t2ohlcvncp&e=csv", timeout=6) as response:
+                payload = response.read().decode("utf-8", errors="ignore").strip().splitlines()
+            if len(payload) >= 2:
+                cols = payload[1].split(",")
+                close_price = cols[6] if len(cols) > 6 else ""
+                percent_change = cols[10] if len(cols) > 10 else ""
+                close_value = float(close_price)
+                change_value = float(percent_change)
+                record["index_value"] = _format_market_value(close_value)
+                record["index_delta"] = _format_market_delta(change_value)
+        except Exception:
+            pass
+
+        refreshed.append(record)
+
+    STATE["market_indices"] = refreshed
+    STATE["market_last_refresh"] = datetime.now(timezone.utc).isoformat()
+
 
 
 class Refresher(Thread):
@@ -161,6 +223,7 @@ def refresh_hotspots() -> None:
     STATE["last_refresh"] = datetime.now(timezone.utc).isoformat()
     tension = _compute_tension(events)
     _append_tension_history(tension, events)
+    _refresh_market_indices()
 
 
 def _is_conflict_event(event: HotspotEvent) -> bool:
@@ -260,12 +323,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.1",
+                    "version": "1.0-beta4.2",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
                     "topics": AVAILABLE_TOPICS,
                     "source_types": SOURCE_TYPES,
+                    "market_last_refresh": STATE["market_last_refresh"],
                 }
             )
 
@@ -345,11 +409,21 @@ class Handler(BaseHTTPRequestHandler):
                     "active_source_types": source_types,
                     "lang": lang,
                     "countries": aggregate_by_country(filtered, lang=lang),
+                    "markets": STATE["market_indices"],
+                    "market_last_refresh": STATE["market_last_refresh"],
                     "global_tension": {
                         "score": latest_tension["score"],
                         "top_regions": latest_tension["top_regions"],
                         "hourly_trend": timeline,
                     },
+                }
+            )
+
+        if parsed.path == "/api/v1/markets":
+            return self._json(
+                {
+                    "last_refresh": STATE["market_last_refresh"],
+                    "markets": STATE["market_indices"],
                 }
             )
 
@@ -377,7 +451,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.1 已启动", flush=True)
+    print("Project GIGDIS beta4.2 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

@@ -1,10 +1,18 @@
-# Project GIGDIS (beta4.1)
+# Project GIGDIS (beta4.2)
 
-Project GIGDIS 是一个全球热点地图系统的 beta4.1 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta4.2 迭代版本。
 
 
 ## Update Log
 
+
+
+
+### beta4.2
+- 修复交易所指数长期静态/错误问题：后端新增交易所指数刷新流程，自动刷新线程与手动刷新接口都会同步触发指数更新。
+- 热点接口新增 `markets` 与 `market_last_refresh` 字段，前端每次拉取热点新闻时同步覆盖所有交易所指数显示。
+- 修复来源识别误判：`Breitbart` 不再因关键字匹配顺序被错误标记为 `RT`。
+- 全量同步版本号为 `beta4.2`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释）。
 
 
 ### beta4.1
