@@ -1,2 +1,2 @@
-# beta4.4 adds Yahoo Finance market data support
+# beta4.5 adds Yahoo Finance market data support
 yfinance>=0.2.54
