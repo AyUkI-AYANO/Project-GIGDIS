@@ -1,20 +1,18 @@
-# Project GIGDIS (beta3.0)
+# Project GIGDIS (beta3.1)
 
-Project GIGDIS 是一个全球热点地图系统的 beta3.0 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta3.1 迭代版本。
 
 
 ## Update Log
 
 
 
-### beta3.0
-- 插件外部数据能力升级：`externalSources` 新增 `method/headers/body/responseType=html/regex/selector/attr/sourceApi` 等能力，更方便抽取网页文本、正则片段与 DOM 选择器内容。
-- 模板函数扩展：新增 `length/slice/replace/json/pick/truncate`，在插件模板中可直接做字符串截断、字段拾取与 JSON 输出。
-- 信息源体系升级：新增 AP、Guardian、NPR Politics、The Local、TOI、ABC Australia、Nikkei Asia、Fox、RT、Breitbart 等来源，并按「主流媒体 / 地方媒体 / 非中立媒体」分类。
-- 设置菜单新增“信息源类型”多选项，可按需勾选一个或多个来源分类进行展示。
-- 新增信息源接口：`GET /api/v1/sources` 返回来源目录，`GET /api/v1/source-content?source=Reuters` 允许插件/外部直接读取指定信息源聚合内容。
-- 新增示例插件 `source-bridge.plugin.json`，演示插件通过 `sourceApi` 直接调用信息源数据。
-- 全量同步版本号为 `beta3.0`（服务端、前端标题/页眉、README、插件规范）。
+### beta3.1
+- 修复示例插件 `source-bridge.plugin.json` 无法读取 `sourceApi` 的问题：前端插件加载器 `resolveExternalVars` 现已允许仅声明 `sourceApi`（无需 `url`）并正确请求 `/api/v1/source-content`。
+- 新增并强化非洲信息源覆盖：加入 BBC Africa、AllAfrica、Africanews、News24、Punch Nigeria、Daily Maverick、The Namibian、Egypt Today、Sahara Reporters。
+- 新增非洲国家识别与地图定位关键词（如 Nigeria/Kenya/Ethiopia/Sudan/DR Congo 等），提升该区域新闻识别与地图落点能力。
+- 信息源继续按「主流媒体 / 地方媒体 / 非中立媒体」分类管理，并可在设置菜单中按分类筛选。
+- 全量同步版本号为 `beta3.1`（服务端、前端标题/页眉、README、插件规范）。
 
 ### beta2.3
 - 彻底取消冲突地图标记显示能力：前端移除 map-marker 插件加载流程，插件清单去除 `map_markers`，并删除冲突标记插件示例文件。

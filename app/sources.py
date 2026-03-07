@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS beta3.0."""
+"""Data source definitions for Project GIGDIS beta3.1."""
 
 SOURCE_TYPES = {
     "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
@@ -18,14 +18,23 @@ RSS_SOURCES = [
     {"name": "AP Top News", "url": "https://apnews.com/hub/ap-top-news?output=1", "credibility": 0.91, "type": "mainstream"},
     {"name": "The Guardian World", "url": "https://www.theguardian.com/world/rss", "credibility": 0.87, "type": "mainstream"},
     {"name": "NPR Politics", "url": "https://feeds.npr.org/1014/rss.xml", "credibility": 0.88, "type": "mainstream"},
+    {"name": "BBC Africa", "url": "http://feeds.bbci.co.uk/news/world/africa/rss.xml", "credibility": 0.91, "type": "mainstream"},
+    {"name": "AllAfrica", "url": "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf", "credibility": 0.84, "type": "mainstream"},
+    {"name": "Africanews", "url": "https://www.africanews.com/feed/rss", "credibility": 0.82, "type": "mainstream"},
     {"name": "The Local Europe", "url": "https://www.thelocal.com/rss/", "credibility": 0.78, "type": "local"},
     {"name": "The Times of India", "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms", "credibility": 0.76, "type": "local"},
     {"name": "ABC News Australia", "url": "https://www.abc.net.au/news/feed/51120/rss.xml", "credibility": 0.80, "type": "local"},
     {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/nar", "credibility": 0.82, "type": "local"},
+    {"name": "News24 South Africa", "url": "https://feeds.news24.com/articles/news24/TopStories/rss", "credibility": 0.79, "type": "local"},
+    {"name": "Punch Nigeria", "url": "https://punchng.com/feed/", "credibility": 0.74, "type": "local"},
+    {"name": "Daily Maverick South Africa", "url": "https://www.dailymaverick.co.za/feed/", "credibility": 0.77, "type": "local"},
+    {"name": "The Namibian", "url": "https://www.namibian.com.na/feed/", "credibility": 0.73, "type": "local"},
     {"name": "Al Jazeera", "url": "https://www.aljazeera.com/xml/rss/all.xml", "credibility": 0.88, "type": "non_neutral"},
     {"name": "Fox News World", "url": "https://moxie.foxnews.com/google-publisher/world.xml", "credibility": 0.72, "type": "non_neutral"},
     {"name": "RT World News", "url": "https://www.rt.com/rss/news/", "credibility": 0.62, "type": "non_neutral"},
     {"name": "Breitbart World", "url": "https://www.breitbart.com/feed/", "credibility": 0.58, "type": "non_neutral"},
+    {"name": "Egypt Today", "url": "https://www.egypttoday.com/Home/RSS?CategoryId=1", "credibility": 0.66, "type": "non_neutral"},
+    {"name": "Sahara Reporters", "url": "https://saharareporters.com/feeds/latest/feed.xml", "credibility": 0.61, "type": "non_neutral"},
 ]
 
 COUNTRY_KEYWORDS = {
@@ -53,6 +62,17 @@ COUNTRY_KEYWORDS = {
     "Saudi Arabia": ["saudi arabia", "riyadh"],
     "Egypt": ["egypt", "cairo"],
     "South Africa": ["south africa", "johannesburg", "pretoria"],
+    "Nigeria": ["nigeria", "abuja", "lagos"],
+    "Kenya": ["kenya", "nairobi"],
+    "Ethiopia": ["ethiopia", "addis ababa"],
+    "Sudan": ["sudan", "khartoum", "darfur"],
+    "Morocco": ["morocco", "rabat", "casablanca"],
+    "Algeria": ["algeria", "algiers"],
+    "Tunisia": ["tunisia", "tunis"],
+    "Ghana": ["ghana", "accra"],
+    "Tanzania": ["tanzania", "dodoma", "dar es salaam"],
+    "Uganda": ["uganda", "kampala"],
+    "Democratic Republic of the Congo": ["democratic republic of the congo", "dr congo", "kinshasa", "congo"],
     "Italy": ["italy", "rome"],
     "Spain": ["spain", "madrid"],
 }
@@ -82,6 +102,17 @@ COUNTRY_COORDS = {
     "Saudi Arabia": (23.8859, 45.0792),
     "Egypt": (26.8206, 30.8025),
     "South Africa": (-30.5595, 22.9375),
+    "Nigeria": (9.0820, 8.6753),
+    "Kenya": (-0.0236, 37.9062),
+    "Ethiopia": (9.1450, 40.4897),
+    "Sudan": (12.8628, 30.2176),
+    "Morocco": (31.7917, -7.0926),
+    "Algeria": (28.0339, 1.6596),
+    "Tunisia": (33.8869, 9.5375),
+    "Ghana": (7.9465, -1.0232),
+    "Tanzania": (-6.3690, 34.8888),
+    "Uganda": (1.3733, 32.2903),
+    "Democratic Republic of the Congo": (-4.0383, 21.7587),
     "Italy": (41.8719, 12.5674),
     "Spain": (40.4637, -3.7492),
 }
