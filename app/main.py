@@ -1,4 +1,4 @@
-"""Project GIGDIS beta4.5 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta4.6 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -102,17 +102,17 @@ MARKET_INDEX_SOURCES = [
     {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "yfinance_symbols": ["000001.SS"], "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
     {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "yfinance_symbols": ["399001.SZ"], "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
     {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "yfinance_symbols": ["^HSI"], "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "^UKX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "^TSX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225", "NIY=F"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI", "ES3.SI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI", "NIFTYBEES.NS"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI", "EXS1.DE"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI", "CAC.PA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "UKX.L", "ISF.L"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI", "DIA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC", "QQQ"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "XIU.TO"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP", "BOVA11.SA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO", "VAS.AX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
 ]
 
 
@@ -193,24 +193,36 @@ def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
 def _fetch_market_from_yfinance(symbol: str) -> tuple[float, float] | None:
     yf_module = importlib.import_module("yfinance")
     ticker = yf_module.Ticker(symbol)
+    info = getattr(ticker, "info", None) or {}
+    if isinstance(info, dict):
+        price = _safe_float(str(info.get("regularMarketPrice") or info.get("currentPrice") or ""))
+        previous_close = _safe_float(str(info.get("regularMarketPreviousClose") or info.get("previousClose") or ""))
+        if price is not None:
+            if previous_close not in (None, 0):
+                delta = (price - previous_close) / previous_close * 100
+                return price, delta
+            market_change_percent = _safe_float(str(info.get("regularMarketChangePercent") or ""))
+            if market_change_percent is not None:
+                return price, market_change_percent
+
+    fast_info = getattr(ticker, "fast_info", None) or {}
+    if hasattr(fast_info, "get"):
+        price = _safe_float(str(fast_info.get("last_price") or fast_info.get("regular_market_price") or ""))
+        previous_close = _safe_float(str(fast_info.get("previous_close") or ""))
+        if price is not None and previous_close not in (None, 0):
+            delta = (price - previous_close) / previous_close * 100
+            return price, delta
+
     history = ticker.history(period="5d", interval="1d", auto_adjust=False, timeout=5)
     if history.empty or "Close" not in history:
         return None
-
     closes = history["Close"].dropna()
     if closes.empty:
         return None
-
     latest_close = float(closes.iloc[-1])
     previous_close = float(closes.iloc[-2]) if len(closes) >= 2 else None
     if previous_close in (None, 0):
-        fast_info = getattr(ticker, "fast_info", None) or {}
-        candidate_previous = fast_info.get("previous_close") if isinstance(fast_info, dict) else None
-        parsed_previous = _safe_float(str(candidate_previous))
-        previous_close = parsed_previous if parsed_previous not in (None, 0) else None
-    if previous_close in (None, 0):
         return latest_close, 0.0
-
     delta = (latest_close - float(previous_close)) / float(previous_close) * 100
     return latest_close, delta
 
@@ -487,7 +499,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.5",
+                    "version": "1.0-beta4.6",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -615,7 +627,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.5 已启动", flush=True)
+    print("Project GIGDIS beta4.6 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
