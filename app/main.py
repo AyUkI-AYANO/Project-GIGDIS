@@ -1,4 +1,4 @@
-"""Project GIGDIS beta4.2 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta4.3 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -10,8 +10,9 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Event, Thread
+from urllib.error import URLError
 from urllib.parse import parse_qs, quote, urlparse
-from urllib.request import urlopen
+from urllib.request import ProxyHandler, Request, build_opener, urlopen
 
 from pipeline import Event as HotspotEvent
 from pipeline import (
@@ -122,35 +123,70 @@ def _format_market_delta(delta: float) -> str:
     return f"{sign}{delta:.2f}%"
 
 
+MARKET_HTTP_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+    "Accept": "application/json,text/csv,text/plain,*/*",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
+def _http_get_text(url: str, timeout: float = 6.0) -> str:
+    request = Request(url, headers=MARKET_HTTP_HEADERS)
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            return response.read().decode("utf-8", errors="ignore")
+    except URLError:
+        opener = build_opener(ProxyHandler({}))
+        with opener.open(request, timeout=timeout) as response:
+            return response.read().decode("utf-8", errors="ignore")
+
+
+def _safe_float(value: str) -> float | None:
+    cleaned = str(value or "").strip().replace("%", "").replace(",", "")
+    if not cleaned:
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
 
 
 def _fetch_market_from_stooq(symbol: str) -> tuple[float, float] | None:
-    with urlopen(f"https://stooq.com/q/l/?s={symbol}&f=sd2t2ohlcvncp&e=csv", timeout=6) as response:
-        payload = response.read().decode("utf-8", errors="ignore").strip().splitlines()
+    payload = _http_get_text(f"https://stooq.com/q/l/?s={symbol}&f=sd2t2ohlcvncp&e=csv", timeout=6).strip().splitlines()
     if len(payload) < 2:
         return None
     cols = payload[1].split(",")
-    close_price = cols[6] if len(cols) > 6 else ""
-    percent_change = cols[10] if len(cols) > 10 else ""
-    return float(close_price), float(percent_change)
+    close_price = _safe_float(cols[6] if len(cols) > 6 else "")
+    percent_change = _safe_float(cols[10] if len(cols) > 10 else "")
+    if close_price is None or percent_change is None:
+        return None
+    return close_price, percent_change
 
 
 def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
     encoded_symbol = quote(symbol, safe="")
-    with urlopen(
-        f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={encoded_symbol}",
-        timeout=6,
-    ) as response:
-        payload = json.loads(response.read().decode("utf-8", errors="ignore"))
+    payload = json.loads(
+        _http_get_text(
+            f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={encoded_symbol}",
+            timeout=6,
+        )
+    )
     result = ((payload or {}).get("quoteResponse") or {}).get("result") or []
     if not result:
         return None
     quote_item = result[0] if isinstance(result[0], dict) else {}
     price = quote_item.get("regularMarketPrice")
     delta = quote_item.get("regularMarketChangePercent")
-    if price is None or delta is None:
+    if price is None:
         return None
+    if delta is None:
+        previous_close = quote_item.get("regularMarketPreviousClose")
+        if previous_close in (None, 0):
+            return None
+        delta = (float(price) - float(previous_close)) / float(previous_close) * 100
     return float(price), float(delta)
+
 
 def _refresh_market_indices() -> None:
     previous = {item.get("index_code"): item for item in STATE.get("market_indices", []) if isinstance(item, dict)}
@@ -356,7 +392,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.2",
+                    "version": "1.0-beta4.3",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -484,7 +520,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.2 已启动", flush=True)
+    print("Project GIGDIS beta4.3 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
