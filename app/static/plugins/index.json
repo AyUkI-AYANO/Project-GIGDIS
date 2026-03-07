@@ -4,9 +4,6 @@
     "tiles/web-quote.plugin.json",
     "tiles/economy-pulse.plugin.json"
   ],
-  "map_markers": [
-    "map-markers/conflict-focus.plugin.json"
-  ],
   "themes": [
     "themes/black-green.theme.json",
     "themes/ocean-public.theme.json"
