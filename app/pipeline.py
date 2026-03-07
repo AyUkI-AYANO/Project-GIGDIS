@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS beta4.0."""
+"""Hotspot extraction pipeline for Project GIGDIS beta4.1."""
 
 from __future__ import annotations
 
@@ -520,7 +520,7 @@ def _group_events(events: list[Event], key_fn) -> dict:
     return grouped
 
 
-def _expand_sources_for_event(country: str, topic: str, existing: list[dict], related_index: dict[str, dict]) -> list[dict]:
+def _expand_sources_for_event(country: str, topic: str, existing: list[dict], related_index: dict[str, dict], lang: str) -> list[dict]:
     seen = {str(item.get("source", "")).lower() for item in existing}
     extras: list[dict] = []
     candidate_pools = [
@@ -538,6 +538,7 @@ def _expand_sources_for_event(country: str, topic: str, existing: list[dict], re
             extras.append(
                 {
                     "source": candidate.source,
+                    "title": translate_text(candidate.title, lang),
                     "source_outlet": candidate.source_outlet,
                     "source_type": candidate.source_type,
                     "political_leaning": candidate.political_leaning,
@@ -576,6 +577,7 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
         event_key = f"{event.country}:{event.title.strip().lower()[:80]}"
         source_item = {
             "source": event.source,
+            "title": translate_text(event.title, lang),
             "source_outlet": event.source_outlet,
             "source_type": event.source_type,
             "political_leaning": event.political_leaning,
@@ -616,7 +618,7 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
 
     for event in merged_events.values():
         event["sources"] = sorted(event["sources"], key=lambda item: item["hotness"], reverse=True)
-        event["sources"] = _expand_sources_for_event(event["country"], event["topic"], event["sources"], related_source_index)
+        event["sources"] = _expand_sources_for_event(event["country"], event["topic"], event["sources"], related_source_index, lang)
         event["sources"] = sorted(event["sources"], key=lambda item: item["hotness"], reverse=True)
         bucket[event["country"]]["top_events"].append(event)
 
