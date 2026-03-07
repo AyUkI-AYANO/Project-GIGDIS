@@ -1,8 +1,10 @@
-"""Project GIGDIS beta4.5 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta5.0 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Callable
 import json
 import math
 import mimetypes
@@ -44,6 +46,7 @@ STATE: dict[str, object] = {
     "limit_per_source": DEFAULT_LIMIT_PER_SOURCE,
     "market_indices": [],
     "market_last_refresh": None,
+    "economy_snapshot": {},
 }
 
 CONFLICT_KEYWORDS = {
@@ -98,22 +101,39 @@ NON_MILITARY_ATTACK_HINTS = {
 }
 
 
-MARKET_INDEX_SOURCES = [
-    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "yfinance_symbols": ["000001.SS"], "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "yfinance_symbols": ["399001.SZ"], "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "yfinance_symbols": ["^HSI"], "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "^UKX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "^TSX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-]
+@dataclass(frozen=True)
+class MarketIndexConfig:
+    index_code: str
+    yfinance_symbols: tuple[str, ...]
+    yahoo_symbol: str
+    stooq_symbol: str
+    region: str
+    market_cap_trillion: float
+    influence: float
+    tencent_symbol: str = ""
+    sina_symbol: str = ""
+    baseline_value: str = "N/A"
+    baseline_delta: str = "+0.00%"
+
+
+MARKET_INDEX_SOURCES: tuple[MarketIndexConfig, ...] = (
+    MarketIndexConfig("000001.SH", ("000001.SS",), "000001.SS", "^shc", "Asia", 7.8, 0.9, "s_sh000001", "s_sh000001", "3,150.00"),
+    MarketIndexConfig("399001.SZ", ("399001.SZ",), "399001.SZ", "^szc", "Asia", 5.2, 0.82, "s_sz399001", "s_sz399001", "9,650.00"),
+    MarketIndexConfig("HSI", ("^HSI",), "^HSI", "^hsi", "Asia", 4.1, 0.86, "s_hkHSI", "s_hkHSI", "17,300.00"),
+    MarketIndexConfig("N225", ("^N225",), "^N225", "^nkx", "Asia", 6.4, 0.88, baseline_value="38,200.00"),
+    MarketIndexConfig("STI", ("^STI",), "^STI", "^sti", "Asia", 0.7, 0.55, baseline_value="3,250.00"),
+    MarketIndexConfig("NIFTY", ("^NSEI",), "^NSEI", "^nif", "Asia", 4.6, 0.8, baseline_value="22,400.00"),
+    MarketIndexConfig("DAX", ("^GDAXI",), "^GDAXI", "^dax", "Europe", 2.3, 0.72, baseline_value="18,400.00"),
+    MarketIndexConfig("PX1", ("^FCHI",), "^FCHI", "^cac", "Europe", 6.1, 0.84, baseline_value="7,600.00"),
+    MarketIndexConfig("UKX", ("^FTSE", "^UKX"), "^FTSE", "^ukx", "Europe", 3.5, 0.78, baseline_value="8,200.00"),
+    MarketIndexConfig("DJI", ("^DJI",), "^DJI", "^dji", "North America", 28.4, 1.0, baseline_value="39,000.00"),
+    MarketIndexConfig("IXIC", ("^IXIC",), "^IXIC", "^ndq", "North America", 23.1, 0.96, baseline_value="16,500.00"),
+    MarketIndexConfig("TSX", ("^GSPTSE", "^TSX"), "^GSPTSE", "^tsx", "North America", 2.9, 0.68, baseline_value="22,000.00"),
+    MarketIndexConfig("IBOV", ("^BVSP",), "^BVSP", "^bvp", "South America", 1.1, 0.6, baseline_value="128,000.00"),
+    MarketIndexConfig("XJO", ("^AXJO",), "^AXJO", "^asx", "Oceania", 1.8, 0.66, baseline_value="7,800.00"),
+)
+
+MARKET_DATA_CHANNELS = ("yfinance", "yahoo_quote", "yahoo_batch", "stooq", "tencent", "sina", "baseline")
 
 
 def _format_market_value(value: float) -> str:
@@ -123,6 +143,10 @@ def _format_market_value(value: float) -> str:
 def _format_market_delta(delta: float) -> str:
     sign = "+" if delta >= 0 else ""
     return f"{sign}{delta:.2f}%"
+
+
+def _parse_market_delta(delta: str) -> float | None:
+    return _safe_float(delta)
 
 
 MARKET_HTTP_HEADERS = {
@@ -166,6 +190,19 @@ def _fetch_market_from_stooq(symbol: str) -> tuple[float, float] | None:
     return close_price, percent_change
 
 
+def _parse_yahoo_quote_result(item: dict[str, object]) -> tuple[float, float] | None:
+    price = item.get("regularMarketPrice")
+    delta = item.get("regularMarketChangePercent")
+    if price is None:
+        return None
+    if delta is None:
+        previous_close = item.get("regularMarketPreviousClose")
+        if previous_close in (None, 0):
+            return None
+        delta = (float(price) - float(previous_close)) / float(previous_close) * 100
+    return float(price), float(delta)
+
+
 def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
     encoded_symbol = quote(symbol, safe="")
     payload = json.loads(
@@ -178,61 +215,37 @@ def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
     if not result:
         return None
     quote_item = result[0] if isinstance(result[0], dict) else {}
-    price = quote_item.get("regularMarketPrice")
-    delta = quote_item.get("regularMarketChangePercent")
-    if price is None:
-        return None
-    if delta is None:
-        previous_close = quote_item.get("regularMarketPreviousClose")
-        if previous_close in (None, 0):
-            return None
-        delta = (float(price) - float(previous_close)) / float(previous_close) * 100
-    return float(price), float(delta)
+    return _parse_yahoo_quote_result(quote_item)
 
 
-def _fetch_market_from_yfinance(symbol: str) -> tuple[float, float] | None:
-    yf_module = importlib.import_module("yfinance")
-    ticker = yf_module.Ticker(symbol)
-    history = ticker.history(period="5d", interval="1d", auto_adjust=False, timeout=5)
-    if history.empty or "Close" not in history:
-        return None
-
-    closes = history["Close"].dropna()
-    if closes.empty:
-        return None
-
-    latest_close = float(closes.iloc[-1])
-    previous_close = float(closes.iloc[-2]) if len(closes) >= 2 else None
-    if previous_close in (None, 0):
-        fast_info = getattr(ticker, "fast_info", None) or {}
-        candidate_previous = fast_info.get("previous_close") if isinstance(fast_info, dict) else None
-        parsed_previous = _safe_float(str(candidate_previous))
-        previous_close = parsed_previous if parsed_previous not in (None, 0) else None
-    if previous_close in (None, 0):
-        return latest_close, 0.0
-
-    delta = (latest_close - float(previous_close)) / float(previous_close) * 100
-    return latest_close, delta
-
-
-def _fetch_market_from_yfinance_candidates(symbols: list[str]) -> tuple[float, float] | None:
-    for symbol in symbols:
-        symbol = str(symbol).strip()
+def _fetch_markets_from_yahoo_batch(symbols: list[str]) -> dict[str, tuple[float, float]]:
+    sanitized = [quote(symbol, safe="") for symbol in symbols if str(symbol).strip()]
+    if not sanitized:
+        return {}
+    payload = json.loads(
+        _http_get_text(
+            f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={','.join(sanitized)}",
+            timeout=7,
+        )
+    )
+    result = ((payload or {}).get("quoteResponse") or {}).get("result") or []
+    collected: dict[str, tuple[float, float]] = {}
+    for row in result:
+        if not isinstance(row, dict):
+            continue
+        symbol = str(row.get("symbol") or "").strip()
         if not symbol:
             continue
-        try:
-            quote = _fetch_market_from_yfinance(symbol)
-        except Exception:
-            quote = None
-        if quote is not None:
-            return quote
-    return None
+        parsed = _parse_yahoo_quote_result(row)
+        if parsed is not None:
+            collected[symbol] = parsed
+    return collected
 
 
 def _fetch_market_from_tencent(symbol: str) -> tuple[float, float] | None:
     payload = _http_get_text(f"https://qt.gtimg.cn/q={quote(symbol, safe='')}", timeout=6)
     first_line = payload.strip().splitlines()[0] if payload.strip() else ""
-    if "\"" not in first_line:
+    if '"' not in first_line:
         return None
     body = first_line.split('"', 1)[1].rsplit('"', 1)[0]
     cols = body.split("~")
@@ -260,61 +273,187 @@ def _fetch_market_from_sina(symbol: str) -> tuple[float, float] | None:
     return value, delta
 
 
+def _fetch_market_from_yfinance(symbol: str) -> tuple[float, float] | None:
+    yf_module = importlib.import_module("yfinance")
+    ticker = yf_module.Ticker(symbol)
+    history = ticker.history(period="5d", interval="1d", auto_adjust=False, timeout=5)
+    if history.empty or "Close" not in history:
+        return None
+
+    closes = history["Close"].dropna()
+    if closes.empty:
+        return None
+
+    latest_close = float(closes.iloc[-1])
+    previous_close = float(closes.iloc[-2]) if len(closes) >= 2 else None
+    if previous_close in (None, 0):
+        fast_info = getattr(ticker, "fast_info", None) or {}
+        candidate_previous = fast_info.get("previous_close") if isinstance(fast_info, dict) else None
+        parsed_previous = _safe_float(str(candidate_previous))
+        previous_close = parsed_previous if parsed_previous not in (None, 0) else None
+    if previous_close in (None, 0):
+        return latest_close, 0.0
+
+    delta = (latest_close - float(previous_close)) / float(previous_close) * 100
+    return latest_close, delta
+
+
+def _fetch_market_from_yfinance_candidates(symbols: list[str] | tuple[str, ...]) -> tuple[float, float] | None:
+    for symbol in symbols:
+        symbol = str(symbol).strip()
+        if not symbol:
+            continue
+        try:
+            quote = _fetch_market_from_yfinance(symbol)
+        except Exception:
+            quote = None
+        if quote is not None:
+            return quote
+    return None
+
+
+def _fetch_market_quote(
+    config: MarketIndexConfig,
+    yahoo_batch_quotes: dict[str, tuple[float, float]],
+) -> tuple[float, float, str] | None:
+    batch_candidates = [config.yahoo_symbol, *config.yfinance_symbols]
+    for candidate in batch_candidates:
+        candidate = str(candidate).strip()
+        if not candidate:
+            continue
+        batch_quote = yahoo_batch_quotes.get(candidate)
+        if batch_quote is not None:
+            value, delta = batch_quote
+            return value, delta, "yahoo_batch"
+
+    channel_tries: list[tuple[str, Callable[[], tuple[float, float] | None]]] = [
+        ("yfinance", lambda: _fetch_market_from_yfinance_candidates(config.yfinance_symbols)),
+        ("yahoo_quote", lambda: _fetch_market_from_yahoo(config.yahoo_symbol)),
+        ("stooq", lambda: _fetch_market_from_stooq(config.stooq_symbol)),
+    ]
+    if config.tencent_symbol:
+        channel_tries.append(("tencent", lambda: _fetch_market_from_tencent(config.tencent_symbol)))
+    if config.sina_symbol:
+        channel_tries.append(("sina", lambda: _fetch_market_from_sina(config.sina_symbol)))
+
+    for channel_name, fetcher in channel_tries:
+        try:
+            quote = fetcher()
+        except Exception:
+            quote = None
+        if quote is not None:
+            value, delta = quote
+            return value, delta, channel_name
+    return None
+
+
+def _build_economy_snapshot(markets: list[dict[str, object]]) -> dict[str, object]:
+    weighted: list[dict[str, object]] = []
+    for item in markets:
+        delta_value = _parse_market_delta(str(item.get("index_delta", "")))
+        if delta_value is None:
+            continue
+        coefficient = float(item.get("market_cap_trillion", 1.0)) * float(item.get("influence", 1.0))
+        weighted.append({
+            "index_code": item.get("index_code"),
+            "region": item.get("region", "Global"),
+            "delta": delta_value,
+            "coefficient": coefficient,
+        })
+
+    if not weighted:
+        return {
+            "index_score": "N/A",
+            "weighted_delta": "N/A",
+            "market_breadth": {"up": 0, "down": 0, "flat": 0},
+            "regional_trend": [],
+            "ranking": [],
+        }
+
+    total_weight = sum(item["coefficient"] for item in weighted) or 1.0
+    weighted_delta = sum(item["delta"] * item["coefficient"] for item in weighted) / total_weight
+    breadth = {
+        "up": sum(1 for item in weighted if item["delta"] > 0),
+        "down": sum(1 for item in weighted if item["delta"] < 0),
+        "flat": sum(1 for item in weighted if item["delta"] == 0),
+    }
+
+    region_bucket: dict[str, list[float]] = {}
+    for item in weighted:
+        region_bucket.setdefault(str(item["region"]), []).append(float(item["delta"]))
+
+    regional_trend = [
+        {"region": region, "avg_delta": round(sum(values) / len(values), 2)}
+        for region, values in sorted(region_bucket.items())
+    ]
+    ranking = sorted(
+        (
+            {
+                "index_code": item["index_code"],
+                "weighted_impact": round(float(item["delta"]) * float(item["coefficient"]), 3),
+                "weight_ratio": round(float(item["coefficient"]) / total_weight, 4),
+            }
+            for item in weighted
+        ),
+        key=lambda obj: float(obj["weighted_impact"]),
+        reverse=True,
+    )[:5]
+
+    return {
+        "index_score": round(1000 * (1 + weighted_delta / 100), 2),
+        "weighted_delta": round(weighted_delta, 2),
+        "market_breadth": breadth,
+        "regional_trend": regional_trend,
+        "ranking": ranking,
+    }
+
+
 def _refresh_market_indices() -> None:
     previous = {item.get("index_code"): item for item in STATE.get("market_indices", []) if isinstance(item, dict)}
-    refreshed: list[dict[str, str]] = []
+    refreshed: list[dict[str, object]] = []
+
+    channel_health = {channel: 0 for channel in MARKET_DATA_CHANNELS}
+    yahoo_batch_quotes: dict[str, tuple[float, float]] = {}
+    try:
+        yahoo_batch_quotes = _fetch_markets_from_yahoo_batch([item.yahoo_symbol for item in MARKET_INDEX_SOURCES])
+    except Exception:
+        yahoo_batch_quotes = {}
 
     for item in MARKET_INDEX_SOURCES:
-        index_code = item["index_code"]
+        index_code = item.index_code
         prior = previous.get(index_code, {})
-        fallback_value = str(prior.get("index_value") or item["fallback_value"])
-        fallback_delta = str(prior.get("index_delta") or item["fallback_delta"])
-        record = {"index_code": index_code, "index_value": fallback_value, "index_delta": fallback_delta}
+        fallback_value = str(prior.get("index_value") or item.baseline_value)
+        fallback_delta = str(prior.get("index_delta") or item.baseline_delta)
+        record: dict[str, object] = {
+            "index_code": index_code,
+            "index_value": fallback_value,
+            "index_delta": fallback_delta,
+            "region": item.region,
+            "market_cap_trillion": item.market_cap_trillion,
+            "influence": item.influence,
+            "update_channel": "fallback",
+        }
 
-        quote = None
-        tencent_symbol = str(item.get("tencent_symbol", "")).strip()
-        if tencent_symbol:
-            try:
-                quote = _fetch_market_from_tencent(tencent_symbol)
-            except Exception:
-                quote = None
-
-        if quote is None:
-            sina_symbol = str(item.get("sina_symbol", "")).strip()
-            if sina_symbol:
-                try:
-                    quote = _fetch_market_from_sina(sina_symbol)
-                except Exception:
-                    quote = None
-
-        if quote is None:
-            try:
-                yfinance_symbols = item.get("yfinance_symbols") or [str(item.get("yahoo_symbol", ""))]
-                quote = _fetch_market_from_yfinance_candidates(list(yfinance_symbols))
-            except Exception:
-                quote = None
-
-        if quote is None:
-            try:
-                quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
-            except Exception:
-                quote = None
-
-        if quote is None:
-            try:
-                quote = _fetch_market_from_yahoo(str(item.get("yahoo_symbol", "")))
-            except Exception:
-                quote = None
-
+        quote = _fetch_market_quote(item, yahoo_batch_quotes)
         if quote is not None:
-            close_value, change_value = quote
+            close_value, change_value, channel = quote
             record["index_value"] = _format_market_value(close_value)
             record["index_delta"] = _format_market_delta(change_value)
+            record["update_channel"] = channel
+            channel_health[channel] += 1
 
+        if record["update_channel"] == "fallback":
+            record["update_channel"] = "baseline"
+            channel_health["baseline"] += 1
         refreshed.append(record)
 
     STATE["market_indices"] = refreshed
     STATE["market_last_refresh"] = datetime.now(timezone.utc).isoformat()
+    STATE["economy_snapshot"] = {
+        **_build_economy_snapshot(refreshed),
+        "channels": channel_health,
+        "market_count": len(refreshed),
+    }
 
 
 
@@ -487,13 +626,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.5",
+                    "version": "1.0-beta5.0",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
                     "topics": AVAILABLE_TOPICS,
                     "source_types": SOURCE_TYPES,
                     "market_last_refresh": STATE["market_last_refresh"],
+                    "global_economy": STATE.get("economy_snapshot", {}),
                 }
             )
 
@@ -575,6 +715,7 @@ class Handler(BaseHTTPRequestHandler):
                     "countries": aggregate_by_country(filtered, lang=lang),
                     "markets": STATE["market_indices"],
                     "market_last_refresh": STATE["market_last_refresh"],
+                    "global_economy": STATE.get("economy_snapshot", {}),
                     "global_tension": {
                         "score": latest_tension["score"],
                         "top_regions": latest_tension["top_regions"],
@@ -588,6 +729,7 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "last_refresh": STATE["market_last_refresh"],
                     "markets": STATE["market_indices"],
+                    "global_economy": STATE.get("economy_snapshot", {}),
                 }
             )
 
@@ -615,7 +757,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.5 已启动", flush=True)
+    print("Project GIGDIS beta5.0 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
