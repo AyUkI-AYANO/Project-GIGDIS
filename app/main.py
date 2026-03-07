@@ -1,9 +1,10 @@
-"""Project GIGDIS beta1.2 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta1.3 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import math
 import mimetypes
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -109,10 +110,24 @@ def _compute_tension(events: list[HotspotEvent]) -> int:
     military_count = len(military)
     if military_count == 0:
         return 0
+
+    conflict_events = [event for event in military if _is_conflict_event(event)]
+    conflict_count = len(conflict_events)
     avg_hotness = sum(event.hotness for event in military) / military_count
-    count_score = min(60.0, military_count * 2.6)
-    heat_score = min(40.0, avg_hotness * 0.4)
-    return int(round(min(100.0, count_score + heat_score)))
+    conflict_ratio = conflict_count / military_count
+    spread_countries = len({event.country for event in military})
+
+    # 使用饱和曲线避免“常态高位”，只有在冲突密度与范围显著扩大时才会接近 90+。
+    count_score = 42.0 * (1.0 - math.exp(-military_count / 24.0))
+    heat_score = 24.0 * ((min(avg_hotness, 100.0) / 100.0) ** 1.2)
+    conflict_score = 22.0 * (conflict_ratio**1.35)
+    spread_score = min(12.0, spread_countries * 0.85)
+
+    score = count_score + heat_score + conflict_score + spread_score
+    if conflict_count < 45 and score > 88.0:
+        score = 88.0 + (score - 88.0) * 0.35
+
+    return int(round(min(100.0, score)))
 
 
 def _append_tension_history(tension: int, events: list[HotspotEvent]) -> None:
@@ -270,7 +285,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta1.2",
+                    "version": "1.0-beta1.3",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -339,7 +354,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta1.2 已启动", flush=True)
+    print("Project GIGDIS beta1.3 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
