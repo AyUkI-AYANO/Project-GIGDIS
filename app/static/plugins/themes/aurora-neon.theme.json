@@ -18,6 +18,9 @@
     "--meta-text": "#c4b5fd",
     "--kpi-bg": "rgba(30,58,138,0.35)",
     "--link-color": "#93c5fd",
-    "--button-bg": "#7c3aed"
+    "--button-bg": "#7c3aed",
+    "--filter-active-color": "#8b5cf6",
+    "--filter-active-glow": "rgba(139,92,246,0.46)",
+    "--filter-active-gradient-end": "rgba(59,130,246,0.35)"
   }
 }
