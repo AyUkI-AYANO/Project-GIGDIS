@@ -1,9 +1,23 @@
-"""Data source definitions for Project GIGDIS beta3.3."""
+"""Data source definitions for Project GIGDIS beta3.4."""
 
 SOURCE_TYPES = {
     "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
     "local": {"zh": "地方媒体", "en": "Local"},
     "non_neutral": {"zh": "非中立媒体", "en": "Non-neutral"},
+}
+
+POLITICAL_LEANINGS = {
+    "left": {"zh": "左翼", "en": "Left"},
+    "right": {"zh": "右翼", "en": "Right"},
+    "center": {"zh": "中立", "en": "Center"},
+    "mixed": {"zh": "混合", "en": "Mixed"},
+}
+
+POLITICAL_LEANING_COLORS = {
+    "left": "#3b82f6",
+    "right": "#ef4444",
+    "center": "#10b981",
+    "mixed": "#a855f7",
 }
 
 RSS_SOURCES = [
@@ -36,6 +50,44 @@ RSS_SOURCES = [
     {"name": "Egypt Today", "url": "https://www.egypttoday.com/Home/RSS?CategoryId=1", "credibility": 0.66, "type": "non_neutral"},
     {"name": "Sahara Reporters", "url": "https://saharareporters.com/feeds/latest/feed.xml", "credibility": 0.61, "type": "non_neutral"},
 ]
+
+SOURCE_PROFILES = {
+    "Reuters": {"outlet": "Reuters", "political_leaning": "center"},
+    "BBC": {"outlet": "BBC", "political_leaning": "center"},
+    "UN News": {"outlet": "UN News", "political_leaning": "center"},
+    "NPR": {"outlet": "NPR", "political_leaning": "left"},
+    "CNN": {"outlet": "CNN", "political_leaning": "left"},
+    "AP": {"outlet": "AP", "political_leaning": "center"},
+    "The Guardian": {"outlet": "The Guardian", "political_leaning": "left"},
+    "AllAfrica": {"outlet": "AllAfrica", "political_leaning": "center"},
+    "Africanews": {"outlet": "Africanews", "political_leaning": "center"},
+    "The Local": {"outlet": "The Local", "political_leaning": "center"},
+    "The Times of India": {"outlet": "The Times of India", "political_leaning": "center"},
+    "ABC News": {"outlet": "ABC News Australia", "political_leaning": "center"},
+    "Nikkei": {"outlet": "Nikkei", "political_leaning": "center"},
+    "News24": {"outlet": "News24", "political_leaning": "center"},
+    "Punch": {"outlet": "Punch Nigeria", "political_leaning": "center"},
+    "Daily Maverick": {"outlet": "Daily Maverick", "political_leaning": "center"},
+    "The Namibian": {"outlet": "The Namibian", "political_leaning": "center"},
+    "Al Jazeera": {"outlet": "Al Jazeera", "political_leaning": "mixed"},
+    "Fox": {"outlet": "Fox News", "political_leaning": "right"},
+    "RT": {"outlet": "RT", "political_leaning": "right"},
+    "Breitbart": {"outlet": "Breitbart", "political_leaning": "right"},
+    "Egypt Today": {"outlet": "Egypt Today", "political_leaning": "mixed"},
+    "Sahara Reporters": {"outlet": "Sahara Reporters", "political_leaning": "mixed"},
+    "Demo Feed": {"outlet": "Demo Feed", "political_leaning": "center"},
+    "Synthetic Coverage": {"outlet": "Synthetic Coverage", "political_leaning": "center"},
+}
+
+
+def get_source_profile(source_name: str) -> dict[str, str]:
+    for keyword, profile in SOURCE_PROFILES.items():
+        if keyword.lower() in source_name.lower():
+            return {
+                "outlet": profile["outlet"],
+                "political_leaning": profile["political_leaning"],
+            }
+    return {"outlet": source_name, "political_leaning": "center"}
 
 COUNTRY_KEYWORDS = {
     "Ukraine": ["ukraine", "kyiv", "kiev", "dnipro"],

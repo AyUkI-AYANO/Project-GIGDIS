@@ -1,4 +1,4 @@
-"""Project GIGDIS beta3.3 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta3.4 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from pipeline import (
     filter_events_by_topics,
     normalize_language,
 )
-from sources import AVAILABLE_TOPICS, COUNTRY_COORDS, RSS_SOURCES, SOURCE_TYPES
+from sources import AVAILABLE_TOPICS, COUNTRY_COORDS, RSS_SOURCES, SOURCE_TYPES, get_source_profile
 
 HOST = "0.0.0.0"
 PORT = 8000
@@ -260,7 +260,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta3.3",
+                    "version": "1.0-beta3.4",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -279,6 +279,8 @@ class Handler(BaseHTTPRequestHandler):
                             "url": source.get("url"),
                             "credibility": source.get("credibility"),
                             "type": source.get("type", "mainstream"),
+                            "outlet": get_source_profile(str(source.get("name", "")))["outlet"],
+                            "political_leaning": get_source_profile(str(source.get("name", "")))["political_leaning"],
                         }
                         for source in RSS_SOURCES
                     ],
@@ -298,6 +300,9 @@ class Handler(BaseHTTPRequestHandler):
                     "topic": event.topic,
                     "source": event.source,
                     "source_type": event.source_type,
+                    "source_outlet": event.source_outlet,
+                    "political_leaning": event.political_leaning,
+                    "political_leaning_color": event.political_leaning_color,
                     "published_at": event.published_at.isoformat(),
                     "hotness": event.hotness,
                     "link": event.link,
@@ -372,7 +377,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta3.3 已启动", flush=True)
+    print("Project GIGDIS beta3.4 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
