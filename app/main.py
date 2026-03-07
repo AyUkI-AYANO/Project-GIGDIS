@@ -687,11 +687,10 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run() -> None:
-    refresh_hotspots()
+    server = ThreadingHTTPServer((HOST, PORT), Handler)
+
     refresher = Refresher()
     refresher.start()
-
-    server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
     print("Project GIGDIS beta4.6 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
