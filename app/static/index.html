@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS beta1.3</title>
+    <title>Project GIGDIS beta2.0</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; --button-bg:#0284c7; }
@@ -24,6 +24,12 @@
       .filter-button { background:var(--tag-bg); border:1px solid var(--tag-border); color:var(--text); border-radius:999px; padding:5px 11px; font-size:12px; transition:transform .16s ease, filter .16s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease; }
       .filter-button.active { border-color:#22d3ee; background:linear-gradient(120deg, rgba(14,165,233,0.35), rgba(99,102,241,0.35)); box-shadow:0 0 0 1px rgba(34,211,238,0.3), 0 0 14px rgba(56,189,248,0.45); }
       .actions { display:flex; gap:8px; align-items:center; }
+      .settings-group { position:relative; }
+      .settings-menu { position:absolute; top:calc(100% + 6px); right:0; min-width:260px; background:var(--card-bg); border:1px solid var(--card-border); border-radius:10px; padding:10px; display:none; flex-direction:column; gap:10px; z-index:1200; box-shadow:0 10px 24px rgba(2,6,23,0.45); }
+      .settings-group.open .settings-menu { display:flex; }
+      .settings-item { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+      .settings-item .meta { font-size:12px; }
+      .settings-item select { min-width:120px; }
       button, select { border-radius:6px; padding:6px 10px; }
       button { background:var(--button-bg); border:none; color:#fff; cursor:pointer; transition:transform .16s ease, filter .16s ease, box-shadow .2s ease, background .2s ease; }
       button.secondary { background:#334155; }
@@ -34,10 +40,10 @@
       ul { margin:0; padding-left:18px; }
       li { margin-bottom:8px; line-height:1.35; }
       li a { color:var(--link-color); margin-left:6px; }
-      .kpis { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+      .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; }
       .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; }
       .kpi .label { font-size:11px; color:var(--meta-text); }
-      .kpi .value { font-weight:700; font-size:38px; line-height:1; }
+      .kpi .value { font-weight:700; font-size:30px; line-height:1; }
       .kpi-toggle { width:100%; background:transparent; border:1px solid var(--card-border); color:var(--meta-text); font-size:11px; padding:4px; }
       .kpi-details { display:none; border-top:1px dashed var(--card-border); padding-top:6px; }
       .kpi.expanded .kpi-details { display:block; }
@@ -64,8 +70,8 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta1.3</div>
-      <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select><button id="upload-background" class="secondary" type="button"></button><button id="reset-background" class="secondary" type="button"></button><input id="background-file-input" type="file" accept="image/*" style="display:none" /><button id="toggle-theme" class="secondary"></button><span id="refresh" class="meta"></span></div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.0</div>
+      <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><div id="settings-group" class="settings-group"><button id="settings-toggle" class="secondary" type="button"></button><div id="settings-menu" class="settings-menu"><div class="settings-item"><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select></div><div class="settings-item"><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select></div><div class="settings-item"><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /></div><div class="settings-item"><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select></div><div class="settings-item"><button id="upload-background" class="secondary" type="button"></button><button id="reset-background" class="secondary" type="button"></button><input id="background-file-input" type="file" accept="image/*" style="display:none" /></div><div class="settings-item"><button id="toggle-theme" class="secondary" type="button"></button></div></div></div><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
       <div class="map-column">
@@ -90,6 +96,7 @@
             <div class="kpi" id="kpi-card-events"><div class="label" id="label-events"></div><div id="kpi-events" class="value">0</div><button class="kpi-toggle secondary" data-kpi="events" type="button"></button><div class="kpi-details"><h4 id="events-list-title"></h4><ul id="events-detail-list"></ul><h4 id="events-trend-title"></h4><canvas id="events-chart" width="260" height="58"></canvas></div></div>
             <div class="kpi" id="kpi-card-hotness"><div class="label" id="label-hotness"></div><div id="kpi-hotness" class="value">0</div><button class="kpi-toggle secondary" data-kpi="hotness" type="button"></button><div class="kpi-details"><h4 id="hotness-list-title"></h4><ul id="hotness-detail-list"></ul><h4 id="hotness-trend-title"></h4><canvas id="hotness-chart" width="260" height="58"></canvas></div></div>
             <div class="kpi" id="kpi-card-tension"><div class="label" id="label-tension"></div><div id="kpi-tension" class="value">0</div><button class="kpi-toggle secondary" data-kpi="tension" type="button"></button><div class="kpi-details"><h4 id="tension-hotspots-title"></h4><ul id="tension-hotspots"></ul><h4 id="tension-trend-title"></h4><canvas id="tension-chart" width="260" height="58"></canvas></div></div>
+            <div class="kpi" id="kpi-card-global-economy"><div class="label" id="label-global-economy"></div><div id="kpi-global-economy" class="value">1000</div><button class="kpi-toggle secondary" data-kpi="global-economy" type="button"></button><div class="kpi-details"><h4 id="global-economy-list-title"></h4><ul id="global-economy-detail-list"></ul><h4 id="global-economy-trend-title"></h4><canvas id="global-economy-chart" width="260" height="58"></canvas></div></div>
           </div>
         </section>
         <section class="card"><h3 id="global-title"></h3><ul id="global-list"></ul></section>
@@ -100,8 +107,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       const I18N = {
-        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', refreshNow:'手动刷新', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', conflictZones:'冲突地区', conflictIntensity:'冲突强度', showMarkets:'显示交易所与指数', themePlugin:'主题插件', uploadBackground:'本地背景图', resetBackground:'恢复默认背景图', backgroundReadError:'背景图读取失败' },
-        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', refreshNow:'Refresh now', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', conflictZones:'Conflict zones', conflictIntensity:'Conflict intensity', showMarkets:'Show exchanges & indices', themePlugin:'Theme plugin', uploadBackground:'Local background', resetBackground:'Reset default background', backgroundReadError:'Failed to read background image' }
+        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', globalEconomy:'全球经济指数', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', exchangeRanking:'交易所加权排名', refreshNow:'手动刷新', settings:'设置', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', conflictZones:'冲突地区', conflictIntensity:'冲突强度', showMarkets:'显示交易所与指数', themePlugin:'主题插件', uploadBackground:'本地背景图', resetBackground:'恢复默认背景图', backgroundReadError:'背景图读取失败' },
+        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', globalEconomy:'Global economic index', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', exchangeRanking:'Weighted exchange ranking', refreshNow:'Refresh now', settings:'Settings', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', conflictZones:'Conflict zones', conflictIntensity:'Conflict intensity', showMarkets:'Show exchanges & indices', themePlugin:'Theme plugin', uploadBackground:'Local background', resetBackground:'Reset default background', backgroundReadError:'Failed to read background image' }
       };
       const TOPIC_LABELS = { military:{zh:'军事',en:'military'}, politics:{zh:'政治',en:'politics'}, technology:{zh:'科技',en:'technology'}, science:{zh:'科学',en:'science'}, disaster:{zh:'灾害',en:'disaster'}, 'public-health':{zh:'公共卫生',en:'public-health'}, diplomacy:{zh:'外交',en:'diplomacy'}, economy:{zh:'经济',en:'economy'}, general:{zh:'综合',en:'general'} };
       const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes', REFRESH_LIMIT_KEY='gigdis-refresh-limit', MARKET_TOGGLE_KEY='gigdis-show-markets', THEME_PLUGIN_KEY='gigdis-theme-plugin', CUSTOM_BACKGROUND_KEY='gigdis-custom-background';
@@ -131,7 +138,7 @@
       let mapMarkerPlugins = [];
       let themePlugins = [];
       let activeThemePlugin = localStorage.getItem(THEME_PLUGIN_KEY) || 'blackGreenBuiltinTheme';
-      let overviewHistory = { countries:[], events:[], hotness:[] };
+      let overviewHistory = { countries:[], events:[], hotness:[], tension:[], globalEconomy:[] };
       let panelSnapshot = {}, hotspotsSnapshot = {};
       let refreshMinutes = Number(localStorage.getItem(REFRESH_INTERVAL_KEY) || 15);
       let refreshLimit = Number(localStorage.getItem(REFRESH_LIMIT_KEY) || 40);
@@ -153,20 +160,20 @@
       function resolveTemplateText(template, lang){ if (typeof template === 'string') return template; return (template || {})[lang] || template?.zh || template?.en || ''; }
 
       const GLOBAL_MARKETS = [
-        { nameZh:'上海证券交易所', nameEn:'Shanghai Stock Exchange', indexZh:'上证指数', indexEn:'SSE Composite', indexCode:'000001.SH', indexValue:'3,128.44', indexDelta:'+0.82%', lat:31.240, lon:121.490 },
-        { nameZh:'深圳证券交易所', nameEn:'Shenzhen Stock Exchange', indexZh:'深证成指', indexEn:'SZSE Component', indexCode:'399001.SZ', indexValue:'9,671.21', indexDelta:'+1.04%', lat:22.543, lon:114.058 },
-        { nameZh:'香港交易所', nameEn:'Hong Kong Exchange', indexZh:'恒生指数', indexEn:'Hang Seng Index', indexCode:'HSI', indexValue:'16,923.45', indexDelta:'+0.67%', lat:22.2800, lon:114.1588 },
-        { nameZh:'东京证券交易所', nameEn:'Tokyo Stock Exchange', indexZh:'日经225', indexEn:'Nikkei 225', indexCode:'N225', indexValue:'39,009.88', indexDelta:'-0.12%', lat:35.6824, lon:139.7690 },
-        { nameZh:'新加坡交易所', nameEn:'Singapore Exchange', indexZh:'海峡时报指数', indexEn:'STI', indexCode:'STI', indexValue:'3,176.52', indexDelta:'+0.26%', lat:1.2796, lon:103.8490 },
-        { nameZh:'印度国家证券交易所', nameEn:'National Stock Exchange of India', indexZh:'NIFTY 50', indexEn:'NIFTY 50', indexCode:'NIFTY', indexValue:'22,487.70', indexDelta:'+0.58%', lat:19.0596, lon:72.8656 },
-        { nameZh:'德意志交易所（法兰克福）', nameEn:'Frankfurt Stock Exchange', indexZh:'DAX', indexEn:'DAX', indexCode:'DAX', indexValue:'17,912.11', indexDelta:'+0.19%', lat:50.1150, lon:8.6721 },
-        { nameZh:'泛欧交易所（巴黎）', nameEn:'Euronext Paris', indexZh:'CAC 40', indexEn:'CAC 40', indexCode:'PX1', indexValue:'8,051.66', indexDelta:'+0.13%', lat:48.8686, lon:2.3412 },
-        { nameZh:'伦敦证券交易所', nameEn:'London Stock Exchange', indexZh:'富时100', indexEn:'FTSE 100', indexCode:'UKX', indexValue:'7,684.15', indexDelta:'+0.11%', lat:51.5142, lon:-0.0878 },
-        { nameZh:'纽约证券交易所', nameEn:'New York Stock Exchange', indexZh:'道琼斯工业指数', indexEn:'Dow Jones', indexCode:'DJI', indexValue:'39,412.67', indexDelta:'-0.21%', lat:40.7069, lon:-74.0113 },
-        { nameZh:'纳斯达克交易所', nameEn:'NASDAQ', indexZh:'纳斯达克综合指数', indexEn:'NASDAQ Composite', indexCode:'IXIC', indexValue:'16,224.17', indexDelta:'+0.33%', lat:40.7549, lon:-73.9840 },
-        { nameZh:'多伦多证券交易所', nameEn:'Toronto Stock Exchange', indexZh:'S&P/TSX综合指数', indexEn:'S&P/TSX Composite', indexCode:'TSX', indexValue:'21,603.08', indexDelta:'+0.17%', lat:43.6487, lon:-79.3801 },
-        { nameZh:'巴西证券期货交易所', nameEn:'B3 Brasil Bolsa Balcão', indexZh:'IBOVESPA', indexEn:'Ibovespa', indexCode:'IBOV', indexValue:'128,452.31', indexDelta:'-0.34%', lat:-23.5475, lon:-46.6361 },
-        { nameZh:'澳大利亚证券交易所', nameEn:'Australian Securities Exchange', indexZh:'S&P/ASX 200', indexEn:'S&P/ASX 200', indexCode:'XJO', indexValue:'7,734.29', indexDelta:'+0.22%', lat:-33.8651, lon:151.2099 }
+        { nameZh:'上海证券交易所', nameEn:'Shanghai Stock Exchange', indexZh:'上证指数', indexEn:'SSE Composite', indexCode:'000001.SH', indexValue:'3,128.44', indexDelta:'+0.82%', marketCapTrillion:7.8, influence:0.9, lat:31.240, lon:121.490 },
+        { nameZh:'深圳证券交易所', nameEn:'Shenzhen Stock Exchange', indexZh:'深证成指', indexEn:'SZSE Component', indexCode:'399001.SZ', indexValue:'9,671.21', indexDelta:'+1.04%', marketCapTrillion:5.2, influence:0.82, lat:22.543, lon:114.058 },
+        { nameZh:'香港交易所', nameEn:'Hong Kong Exchange', indexZh:'恒生指数', indexEn:'Hang Seng Index', indexCode:'HSI', indexValue:'16,923.45', indexDelta:'+0.67%', marketCapTrillion:4.1, influence:0.86, lat:22.2800, lon:114.1588 },
+        { nameZh:'东京证券交易所', nameEn:'Tokyo Stock Exchange', indexZh:'日经225', indexEn:'Nikkei 225', indexCode:'N225', indexValue:'39,009.88', indexDelta:'-0.12%', marketCapTrillion:6.4, influence:0.88, lat:35.6824, lon:139.7690 },
+        { nameZh:'新加坡交易所', nameEn:'Singapore Exchange', indexZh:'海峡时报指数', indexEn:'STI', indexCode:'STI', indexValue:'3,176.52', indexDelta:'+0.26%', marketCapTrillion:0.7, influence:0.55, lat:1.2796, lon:103.8490 },
+        { nameZh:'印度国家证券交易所', nameEn:'National Stock Exchange of India', indexZh:'NIFTY 50', indexEn:'NIFTY 50', indexCode:'NIFTY', indexValue:'22,487.70', indexDelta:'+0.58%', marketCapTrillion:4.6, influence:0.8, lat:19.0596, lon:72.8656 },
+        { nameZh:'德意志交易所（法兰克福）', nameEn:'Frankfurt Stock Exchange', indexZh:'DAX', indexEn:'DAX', indexCode:'DAX', indexValue:'17,912.11', indexDelta:'+0.19%', marketCapTrillion:2.3, influence:0.72, lat:50.1150, lon:8.6721 },
+        { nameZh:'泛欧交易所（巴黎）', nameEn:'Euronext Paris', indexZh:'CAC 40', indexEn:'CAC 40', indexCode:'PX1', indexValue:'8,051.66', indexDelta:'+0.13%', marketCapTrillion:6.1, influence:0.84, lat:48.8686, lon:2.3412 },
+        { nameZh:'伦敦证券交易所', nameEn:'London Stock Exchange', indexZh:'富时100', indexEn:'FTSE 100', indexCode:'UKX', indexValue:'7,684.15', indexDelta:'+0.11%', marketCapTrillion:3.5, influence:0.78, lat:51.5142, lon:-0.0878 },
+        { nameZh:'纽约证券交易所', nameEn:'New York Stock Exchange', indexZh:'道琼斯工业指数', indexEn:'Dow Jones', indexCode:'DJI', indexValue:'39,412.67', indexDelta:'-0.21%', marketCapTrillion:28.4, influence:1, lat:40.7069, lon:-74.0113 },
+        { nameZh:'纳斯达克交易所', nameEn:'NASDAQ', indexZh:'纳斯达克综合指数', indexEn:'NASDAQ Composite', indexCode:'IXIC', indexValue:'16,224.17', indexDelta:'+0.33%', marketCapTrillion:23.1, influence:0.96, lat:40.7549, lon:-73.9840 },
+        { nameZh:'多伦多证券交易所', nameEn:'Toronto Stock Exchange', indexZh:'S&P/TSX综合指数', indexEn:'S&P/TSX Composite', indexCode:'TSX', indexValue:'21,603.08', indexDelta:'+0.17%', marketCapTrillion:2.9, influence:0.68, lat:43.6487, lon:-79.3801 },
+        { nameZh:'巴西证券期货交易所', nameEn:'B3 Brasil Bolsa Balcão', indexZh:'IBOVESPA', indexEn:'Ibovespa', indexCode:'IBOV', indexValue:'128,452.31', indexDelta:'-0.34%', marketCapTrillion:1.1, influence:0.6, lat:-23.5475, lon:-46.6361 },
+        { nameZh:'澳大利亚证券交易所', nameEn:'Australian Securities Exchange', indexZh:'S&P/ASX 200', indexEn:'S&P/ASX 200', indexCode:'XJO', indexValue:'7,734.29', indexDelta:'+0.22%', marketCapTrillion:1.8, influence:0.66, lat:-33.8651, lon:151.2099 }
       ];
 
       function getMarketLabel(item){ return currentLang === 'zh' ? item.nameZh : item.nameEn; }
@@ -180,6 +187,24 @@
           marker.bindPopup(popup);
           marker.addTo(marketMarkers);
         });
+      }
+      function parseIndexDelta(deltaText){
+        const raw = Number(String(deltaText || '').replace('%',''));
+        return Number.isFinite(raw) ? raw : 0;
+      }
+      function computeGlobalEconomyMetrics(){
+        const weightedMarkets = GLOBAL_MARKETS.map(item => {
+          const coefficient = Number(item.marketCapTrillion || 1) * Number(item.influence || 1);
+          return { ...item, coefficient, delta: parseIndexDelta(item.indexDelta) };
+        });
+        const totalWeight = weightedMarkets.reduce((sum, item) => sum + item.coefficient, 0) || 1;
+        const weightedDelta = weightedMarkets.reduce((sum, item) => sum + item.delta * item.coefficient, 0) / totalWeight;
+        const indexScore = Number((1000 * (1 + weightedDelta / 100)).toFixed(2));
+        const ranking = weightedMarkets
+          .map(item => ({ ...item, weightedImpact: Number((item.delta * item.coefficient).toFixed(3)), weightRatio: item.coefficient / totalWeight }))
+          .sort((a,b) => b.weightedImpact - a.weightedImpact)
+          .slice(0,5);
+        return { indexScore, weightedDelta, ranking };
       }
 
       function applyBackgroundImage(defaultBackgroundImage = ''){
@@ -382,28 +407,33 @@
         vals.forEach((v,i)=>{ const x=(i/Math.max(vals.length-1,1))*(canvas.width-10)+5; const y=(1-(v-min)/span)*(canvas.height-12)+6; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
         ctx.stroke();
       }
-      function renderOverviewDetails(countries, tension){
+      function renderOverviewDetails(countries, tension, globalEconomy){
         const byEvents = [...countries].sort((a,b)=>b.event_count-a.event_count).slice(0,5);
         const byHotness = [...countries].sort((a,b)=>b.avg_hotness-a.avg_hotness).slice(0,5);
         const byCountryHeat = (tension.top_regions || []).slice(0,5);
+        const economyRanking = globalEconomy.ranking || [];
         document.getElementById('countries-detail-list').innerHTML = byEvents.map(c => `<li>${c.country}: ${c.event_count}${t().eventCount}</li>`).join('') || `<li>${t().noData}</li>`;
         document.getElementById('events-detail-list').innerHTML = byEvents.map(c => `<li>${c.country}: ${c.event_count}${t().eventCount}</li>`).join('') || `<li>${t().noData}</li>`;
         document.getElementById('hotness-detail-list').innerHTML = byHotness.map(c => `<li>${c.country}: ${c.avg_hotness}${t().points}</li>`).join('') || `<li>${t().noData}</li>`;
         document.getElementById('tension-hotspots').innerHTML = byCountryHeat.map(c => `<li>${c.region}: ${Math.round(c.heat)} ${t().points}</li>`).join('') || `<li>${t().noData}</li>`;
+        document.getElementById('global-economy-detail-list').innerHTML = economyRanking.map(m => `<li>${getMarketLabel(m)}: ${(m.weightRatio * 100).toFixed(1)}% · ${m.indexDelta}</li>`).join('') || `<li>${t().noData}</li>`;
         drawMiniChart('countries-chart', overviewHistory.countries);
         drawMiniChart('events-chart', overviewHistory.events);
         drawMiniChart('hotness-chart', overviewHistory.hotness);
         drawMiniChart('tension-chart', tension.hourly_trend || []);
+        drawMiniChart('global-economy-chart', overviewHistory.globalEconomy);
       }
       function renderKpis(countries, tension){
         const totalCountries = countries.length;
         const totalEvents = countries.reduce((acc, item) => acc + item.event_count, 0);
         const avgHotness = totalCountries ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries).toFixed(1) : '0';
+        const globalEconomy = computeGlobalEconomyMetrics();
         document.getElementById('kpi-countries').textContent = String(totalCountries);
         document.getElementById('kpi-events').textContent = String(totalEvents);
         document.getElementById('kpi-hotness').textContent = String(avgHotness);
         document.getElementById('kpi-tension').textContent = String(tension.score ?? 0);
-        renderOverviewDetails(countries, tension || {});
+        document.getElementById('kpi-global-economy').textContent = String(globalEconomy.indexScore);
+        renderOverviewDetails(countries, tension || {}, globalEconomy);
       }
       function renderList(el, items){ el.innerHTML = ''; if (!items.length) { el.innerHTML = `<li>${t().noData}</li>`; return; } items.forEach(item => { const li = document.createElement('li'); const label = item.topic_label || topicLabel(item.topic); li.appendChild(document.createTextNode(`${item.country}｜${label}｜${item.hotness}${t().points}｜${item.title}`)); if (item.link) { const link = document.createElement('a'); link.href = item.link; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = t().viewSource; li.appendChild(link); } el.appendChild(li); }); }
       function markerStyle(country, stats){ const hotnessRatio = stats.hotnessSpan > 0 ? (country.avg_hotness - stats.minHotness) / stats.hotnessSpan : 0.5; const countRatio = stats.maxEvents > 0 ? country.event_count / stats.maxEvents : 0; const radius = 6 + countRatio * 14 + hotnessRatio * 8; const hue = 210 - hotnessRatio * 190; return { radius, fillColor:`hsl(${hue}, 85%, 52%)`, borderColor:`hsl(${Math.max(0, hue - 15)}, 90%, 42%)` }; }
@@ -432,9 +462,12 @@
         const totalCountries = countries.length; const totalEvents = countries.reduce((acc, item) => acc + item.event_count, 0);
         const avgHotnessRaw = totalCountries ? (countries.reduce((acc, item) => acc + item.avg_hotness, 0) / totalCountries) : 0;
         const tensionScore = Number(tension.score || 0);
+        const globalEconomy = computeGlobalEconomyMetrics();
         overviewHistory.countries = [...overviewHistory.countries, totalCountries].slice(-24);
         overviewHistory.events = [...overviewHistory.events, totalEvents].slice(-24);
         overviewHistory.hotness = [...overviewHistory.hotness, Number(avgHotnessRaw.toFixed(2))].slice(-24);
+        overviewHistory.tension = [...overviewHistory.tension, tensionScore].slice(-24);
+        overviewHistory.globalEconomy = [...overviewHistory.globalEconomy, globalEconomy.indexScore].slice(-24);
         const heatDelta = avgHotnessRaw - (lastSnapshot.avgHotness || 0);
         const tensionDelta = Math.round(tensionScore - (lastSnapshot.tensionScore || 0));
         const countryDelta = totalCountries - Number(lastSnapshot.countries || 0);
@@ -459,13 +492,14 @@
       function rerenderStaticText(){
         document.getElementById('filters-title').textContent = t().filters; document.getElementById('clear-filters').textContent = t().clear;
         document.getElementById('overview-title').textContent = t().overview; document.getElementById('label-countries').textContent = t().countries;
-        document.getElementById('label-events').textContent = t().events; document.getElementById('label-hotness').textContent = t().hotness; document.getElementById('label-tension').textContent = t().tension;
+        document.getElementById('label-events').textContent = t().events; document.getElementById('label-hotness').textContent = t().hotness; document.getElementById('label-tension').textContent = t().tension; document.getElementById('label-global-economy').textContent = t().globalEconomy;
         document.getElementById('countries-list-title').textContent = t().topCountries; document.getElementById('events-list-title').textContent = t().topCountries; document.getElementById('hotness-list-title').textContent = t().topCountries;
         document.getElementById('countries-trend-title').textContent = t().trend; document.getElementById('events-trend-title').textContent = t().trend; document.getElementById('hotness-trend-title').textContent = t().trend;
-        document.getElementById('tension-hotspots-title').textContent = t().hotspots; document.getElementById('tension-trend-title').textContent = t().trend;
+        document.getElementById('tension-hotspots-title').textContent = t().hotspots; document.getElementById('tension-trend-title').textContent = t().trend; document.getElementById('global-economy-list-title').textContent = t().exchangeRanking; document.getElementById('global-economy-trend-title').textContent = t().trend;
         document.getElementById('global-title').textContent = t().globalTop; document.getElementById('viewport-title').textContent = t().viewport; document.getElementById('viewport-tip').textContent = t().viewportTip;
         document.getElementById('tiles-title').textContent = t().tiles; document.getElementById('refresh').textContent = t().loading;
         document.getElementById('manual-refresh').textContent = t().refreshNow;
+        document.getElementById('settings-toggle').textContent = t().settings;
         document.getElementById('refresh-limit-label').textContent = t().refreshCount;
         document.getElementById('refresh-interval-label').textContent = t().refreshEvery;
         document.getElementById('market-toggle-label').textContent = t().showMarkets;
@@ -480,6 +514,14 @@
         syncSelectorState(); renderTileSettings(); syncTilePanelState(); applyTheme(currentTheme);
       }
       function setupLanguage(){ const select = document.getElementById('lang-select'); select.innerHTML=''; Object.keys(I18N).forEach(key => { const opt = document.createElement('option'); opt.value = key; opt.textContent = I18N[key].lang; opt.selected = key === currentLang; select.appendChild(opt); }); select.addEventListener('change', async (e) => { currentLang = e.target.value; localStorage.setItem(LANG_KEY, currentLang); rerenderStaticText(); initFilters(true); await bootstrap(); }); }
+      function setupSettingsMenu(){
+        const group = document.getElementById('settings-group');
+        const button = document.getElementById('settings-toggle');
+        button.addEventListener('click', () => group.classList.toggle('open'));
+        document.addEventListener('click', (event) => {
+          if (!group.contains(event.target)) group.classList.remove('open');
+        });
+      }
 
       document.getElementById('toggle-theme').addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
       document.getElementById('clear-filters').addEventListener('click', async () => { clearSelectedTopics(); activeTopics = []; selectedCountry = null; await bootstrap(); });
@@ -500,6 +542,7 @@
       document.querySelectorAll('.kpi-toggle').forEach(btn => btn.addEventListener('click', () => { const card = btn.closest('.kpi'); card.classList.toggle('expanded'); btn.textContent = card.classList.contains('expanded') ? t().detailCollapse : t().detailExpand; }));
 
       (async function init(){
+        setupSettingsMenu();
         setupLanguage();
         setupRefreshControls();
         await loadPluginTiles();
