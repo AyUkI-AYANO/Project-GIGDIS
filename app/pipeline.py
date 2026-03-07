@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS beta1.2."""
+"""Hotspot extraction pipeline for Project GIGDIS beta2.0."""
 
 from __future__ import annotations
 
