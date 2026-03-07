@@ -1,4 +1,4 @@
-# Plugin 规范（beta1.0）
+# Plugin 规范（beta2.2）
 
 本文档说明 Project GIGDIS 的插件体系（磁贴插件 + 地图标记插件 + 主题插件）。
 
@@ -76,3 +76,55 @@ app/static/plugins/
 - 文件读取失败或 JSON 非法：跳过该插件。
 - 缺失 `id`/`type`：跳过该插件。
 - 主题插件加载失败时回退默认主题。
+
+
+## 9. 模板函数调用（beta2.2 新增）
+
+磁贴插件 `valueTemplate/subTemplate` 现支持两种占位符：
+
+- 路径变量：`{tensionScore}`、`{panel.global_top.0.country}`
+- 函数调用：`{fixed:globalEconomy|2}`（函数名后接 `:`，参数以 `|` 分隔）
+
+### 9.1 语法
+
+```text
+{functionName:arg1|arg2|...}
+```
+
+参数解析规则：
+
+- 如果参数可在上下文命中同名路径（如 `globalEconomy`），则取上下文值。
+- 否则按字面量处理（可使用 `'文本'` 或 `"文本"` 包裹）。
+
+### 9.2 内置函数
+
+- `upper(value)`：转大写。
+- `lower(value)`：转小写。
+- `fixed(value, digits=2)`：数字保留指定位数。
+- `percent(value, digits=2)`：格式化百分比。
+- `add(a,b,...)`：求和。
+- `multiply(a,b,...)`：连乘。
+- `join(separator,v1,v2,...)`：按分隔符拼接。
+- `default(primary,fallback)`：空值回退。
+- `trendSign(value)`：正数自动补 `+` 号。
+
+### 9.3 示例
+
+```json
+{
+  "id": "economyPulse",
+  "type": "metric",
+  "title": { "zh": "经济脉冲", "en": "Economy pulse" },
+  "functions": ["fixed", "trendSign", "join"],
+  "valueTemplate": {
+    "zh": "指数 {fixed:globalEconomy|2}（{trendSign:globalEconomyDelta}%）",
+    "en": "Index {fixed:globalEconomy|2} ({trendSign:globalEconomyDelta}%)"
+  },
+  "subTemplate": {
+    "zh": "筛选：{default:activeTopics|'全部'}",
+    "en": "Topics: {default:activeTopics|'All'}"
+  }
+}
+```
+
+> 可选字段 `functions` 仅用于元数据展示，运行时真正可调用函数以系统内置函数为准。

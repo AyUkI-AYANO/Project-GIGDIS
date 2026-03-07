@@ -10,8 +10,8 @@
     "en": "Top country: {topCountryByEvents}"
   },
   "subTemplate": {
-    "zh": "示例外部内容：{quote}",
-    "en": "External content: {quote}"
+    "zh": "示例外部内容：{default:quote|'暂无'}",
+    "en": "External content: {default:quote|'N/A'}"
   },
   "externalSources": [
     {
@@ -21,5 +21,9 @@
       "path": "hitokoto",
       "ttlSeconds": 600
     }
+  ],
+  "functions": [
+    "upper",
+    "default"
   ]
 }

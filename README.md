@@ -1,6 +1,6 @@
-# Project GIGDIS (beta2.1)
+# Project GIGDIS (beta2.2)
 
-Project GIGDIS 是一个全球热点地图系统的 beta2.1 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta2.2 迭代版本。
 
 
 ## Update Log
@@ -8,6 +8,13 @@ Project GIGDIS 是一个全球热点地图系统的 beta2.1 迭代版本。
 
 
 
+
+### beta2.2
+- 修复「数据概览」中多张卡片“展开详情”按钮纵向未对齐的问题：统一 KPI 数值区最小高度，并让按钮自动贴底对齐，保证 5 张卡片按钮在同一水平线。
+- 扩展磁贴插件模板能力：支持在模板中调用函数（如 `upper/lower/fixed/percent/add/multiply/join/default/trendSign`），可直接做大小写转换、数字格式化与简单计算。
+- 插件管理面板增强：当插件声明 `functions` 字段时，UI 会在插件名称旁显示其可用函数清单，便于快速识别能力。
+- 更新插件规范文档：补充模板函数语法、函数列表、示例与 `functions` 元数据字段说明。
+- 全量同步版本号为 `beta2.2`（服务端、前端标题/页眉、模块注释、README）。
 
 ### beta2.1
 - 修复「全球经济指数」数值在窄卡片下超出模块边界的问题：新增自适应字号收缩逻辑，保证数值始终在卡片内可见。

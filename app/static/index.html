@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS beta2.1</title>
+    <title>Project GIGDIS beta2.2</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; --button-bg:#0284c7; }
@@ -43,8 +43,8 @@
       .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; }
       .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; }
       .kpi .label { font-size:11px; color:var(--meta-text); }
-      .kpi .value { font-weight:700; font-size:30px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:clip; max-width:100%; }
-      .kpi-toggle { width:100%; background:transparent; border:1px solid var(--card-border); color:var(--meta-text); font-size:11px; padding:4px; }
+      .kpi .value { font-weight:700; font-size:30px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:clip; max-width:100%; min-height:30px; display:flex; align-items:flex-end; }
+      .kpi-toggle { width:100%; background:transparent; border:1px solid var(--card-border); color:var(--meta-text); font-size:11px; padding:4px; margin-top:auto; }
       .kpi-details { display:none; border-top:1px dashed var(--card-border); padding-top:6px; }
       .kpi.expanded .kpi-details { display:block; }
       .kpi-details h4 { margin:0 0 4px; font-size:11px; color:var(--meta-text); }
@@ -70,7 +70,7 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.1</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.2</div>
       <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><div id="settings-group" class="settings-group"><button id="settings-toggle" class="secondary" type="button"></button><div id="settings-menu" class="settings-menu"><div class="settings-item"><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select></div><div class="settings-item"><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select></div><div class="settings-item"><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /></div><div class="settings-item"><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select></div><div class="settings-item"><button id="upload-background" class="secondary" type="button"></button><button id="reset-background" class="secondary" type="button"></button><input id="background-file-input" type="file" accept="image/*" style="display:none" /></div><div class="settings-item"><button id="toggle-theme" class="secondary" type="button"></button></div></div></div><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
@@ -156,7 +156,51 @@
       function getTileTitle(tile){ return tile.title?.[currentLang] || tile.title?.zh || tile.title?.en || t()[tile.titleKey] || tile.id; }
       function formatTemplateValue(value){ if (value === null || value === undefined) return ''; if (Array.isArray(value)) return value.map(item => formatTemplateValue(item)).join(', '); if (typeof value === 'object') return JSON.stringify(value); return String(value); }
       function extractPath(obj, path){ return String(path || '').split('.').filter(Boolean).reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), obj); }
-      function compileTemplate(template, context){ return String(template || '').replace(/\{([\w.]+)\}/g, (_, key) => formatTemplateValue(extractPath(context, key))); }
+      function toNumeric(value){
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        const parsed = Number(String(value || '').replace(/[^0-9.-]/g, ''));
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+      const TEMPLATE_FUNCTIONS = {
+        upper: (...args) => formatTemplateValue(args[0]).toUpperCase(),
+        lower: (...args) => formatTemplateValue(args[0]).toLowerCase(),
+        fixed: (...args) => toNumeric(args[0]).toFixed(Math.max(0, Math.min(6, Math.round(toNumeric(args[1] ?? 2))))),
+        percent: (...args) => `${toNumeric(args[0]).toFixed(Math.max(0, Math.min(4, Math.round(toNumeric(args[1] ?? 2)))))}%`,
+        add: (...args) => String(args.reduce((sum, item) => sum + toNumeric(item), 0)),
+        multiply: (...args) => String(args.reduce((sum, item) => sum * toNumeric(item), 1)),
+        join: (...args) => {
+          if (!args.length) return '';
+          const separator = formatTemplateValue(args[0]);
+          return args.slice(1).map(item => formatTemplateValue(item)).filter(Boolean).join(separator);
+        },
+        default: (...args) => {
+          const primary = formatTemplateValue(args[0]);
+          return primary ? primary : formatTemplateValue(args[1]);
+        },
+        trendSign: (...args) => {
+          const value = toNumeric(args[0]);
+          if (value > 0) return `+${value}`;
+          return String(value);
+        },
+      };
+      function parseTemplateToken(token, context){
+        const raw = String(token || '').trim();
+        if (!raw) return '';
+        const fnParts = raw.split(':');
+        if (fnParts.length === 1) return extractPath(context, raw);
+        const fnName = fnParts.shift();
+        const rawArgs = fnParts.join(':').split('|').map(item => item.trim());
+        const resolvedArgs = rawArgs.map(arg => {
+          if (!arg) return '';
+          if ((arg.startsWith('"') && arg.endsWith('"')) || (arg.startsWith("'") && arg.endsWith("'"))) return arg.slice(1, -1);
+          const nested = extractPath(context, arg);
+          return nested === undefined ? arg : nested;
+        });
+        const handler = TEMPLATE_FUNCTIONS[fnName];
+        if (!handler) return '';
+        return handler(...resolvedArgs);
+      }
+      function compileTemplate(template, context){ return String(template || '').replace(/\{([^{}]+)\}/g, (_, key) => formatTemplateValue(parseTemplateToken(key, context))); }
       function resolveTemplateText(template, lang){ if (typeof template === 'string') return template; return (template || {})[lang] || template?.zh || template?.en || ''; }
 
       const GLOBAL_MARKETS = [
@@ -299,6 +343,7 @@
           id: plugin.id,
           type: plugin.type,
           title: plugin.title || { zh: plugin.id, en: plugin.id },
+          functions: Array.isArray(plugin.functions) ? plugin.functions : [],
           render: async (ctx) => {
             const externalVars = await resolveExternalVars(plugin, ctx);
             const data = { ...ctx, ...externalVars };
@@ -352,7 +397,7 @@
           const line = document.createElement('label'); line.className = 'tile-selector-item';
           const input = document.createElement('input'); input.type = 'checkbox'; input.checked = !!tileConfig[tile.id];
           input.addEventListener('change', () => { tileConfig[tile.id] = input.checked; persistTileConfig(); renderTiles(lastSnapshot); });
-          const text = document.createElement('span'); text.textContent = getTileTitle(tile);
+          const text = document.createElement('span'); text.textContent = tile.functions?.length ? `${getTileTitle(tile)} (${tile.functions.join(', ')})` : getTileTitle(tile);
           line.appendChild(input); line.appendChild(text); root.appendChild(line);
         });
       }
@@ -486,7 +531,7 @@
         const tensionDelta = Math.round(tensionScore - (lastSnapshot.tensionScore || 0));
         const countryDelta = totalCountries - Number(lastSnapshot.countries || 0);
         const eventDelta = totalEvents - Number(lastSnapshot.events || 0);
-        lastSnapshot = { avgHotness:avgHotnessRaw, tensionScore, heatDelta, tensionDelta, countryDelta, eventDelta, countries: totalCountries, events: totalEvents, lastRefresh:hotspots.last_refresh || '', topCountryByEvents:countries[0]?.country || '', topTopic:countries[0]?.top_topic_label || topicLabel(countries[0]?.top_topic || '') };
+        lastSnapshot = { avgHotness:avgHotnessRaw, tensionScore, heatDelta, tensionDelta, countryDelta, eventDelta, countries: totalCountries, events: totalEvents, globalEconomy:globalEconomy.indexScore, globalEconomyDelta:globalEconomy.weightedDelta, lastRefresh:hotspots.last_refresh || '', topCountryByEvents:countries[0]?.country || '', topTopic:countries[0]?.top_topic_label || topicLabel(countries[0]?.top_topic || '') };
         renderKpis(countries, tension);
         await renderTiles(lastSnapshot);
         renderPluginMapMarkers({ ...lastSnapshot, hotspots: hotspotsSnapshot, panel: panelSnapshot, lang: currentLang, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, markets: GLOBAL_MARKETS });
