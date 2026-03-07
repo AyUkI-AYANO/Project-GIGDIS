@@ -13,6 +13,7 @@ from threading import Event, Thread
 from urllib.error import URLError
 from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import ProxyHandler, Request, build_opener, urlopen
+import re
 
 import importlib
 
@@ -99,20 +100,20 @@ NON_MILITARY_ATTACK_HINTS = {
 
 
 MARKET_INDEX_SOURCES = [
-    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "yfinance_symbols": ["000001.SS"], "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "yfinance_symbols": ["399001.SZ"], "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "yfinance_symbols": ["^HSI"], "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225", "NIY=F"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI", "ES3.SI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI", "NIFTYBEES.NS"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI", "EXS1.DE"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI", "CAC.PA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "UKX.L", "ISF.L"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI", "DIA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC", "QQQ"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "XIU.TO"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP", "BOVA11.SA"], "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO", "VAS.AX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "yfinance_symbols": ["000001.SS"], "tencent_symbols": ["s_sh000001"], "sina_symbols": ["s_sh000001"], "preferred_sources": ["tencent", "sina", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "yfinance_symbols": ["399001.SZ"], "tencent_symbols": ["s_sz399001"], "sina_symbols": ["s_sz399001"], "preferred_sources": ["tencent", "sina", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "yfinance_symbols": ["^HSI"], "tencent_symbols": ["s_hkHSI"], "sina_symbols": ["s_hkHSI", "int_hangseng"], "preferred_sources": ["tencent", "sina", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225", "NIY=F"], "tencent_symbols": ["r_JP225", "jp_nky"], "sina_symbols": ["int_nikkei", "znb_NKY"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI", "ES3.SI"], "tencent_symbols": ["r_STI", "sg_sti"], "sina_symbols": ["int_sti", "znb_STI"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI", "NIFTYBEES.NS"], "tencent_symbols": ["r_NIFTY", "in_nifty"], "sina_symbols": ["int_nifty", "znb_NIFTY"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI", "EXS1.DE"], "tencent_symbols": ["r_DAX", "de_dax"], "sina_symbols": ["int_dax", "znb_DAX"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI", "CAC.PA"], "tencent_symbols": ["r_CAC40", "fr_cac"], "sina_symbols": ["int_cac", "znb_CAC"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "UKX.L", "ISF.L"], "tencent_symbols": ["r_UKX", "uk_ftse"], "sina_symbols": ["int_ftse", "znb_UKX"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI", "DIA"], "tencent_symbols": ["usDJI"], "sina_symbols": ["int_dji", "gb_dji"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC", "QQQ"], "tencent_symbols": ["usIXIC"], "sina_symbols": ["int_nasdaq", "gb_ixic"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "XIU.TO"], "tencent_symbols": ["r_TSX", "ca_tsx"], "sina_symbols": ["int_tsx", "znb_TSX"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP", "BOVA11.SA"], "tencent_symbols": ["r_IBOV", "br_ibov"], "sina_symbols": ["int_bovespa", "znb_IBOV"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO", "VAS.AX"], "tencent_symbols": ["r_ASX200", "au_asx200"], "sina_symbols": ["int_asx", "int_asx200", "znb_ASX"], "preferred_sources": ["sina", "tencent", "yfinance", "stooq", "yahoo"], "fallback_value": "N/A", "fallback_delta": "N/A"},
 ]
 
 
@@ -248,10 +249,33 @@ def _fetch_market_from_tencent(symbol: str) -> tuple[float, float] | None:
         return None
     body = first_line.split('"', 1)[1].rsplit('"', 1)[0]
     cols = body.split("~")
-    if len(cols) < 6:
+    if len(cols) < 4:
         return None
-    value = _safe_float(cols[3])
-    delta = _safe_float(cols[5])
+
+    value = _safe_float(cols[3]) if len(cols) > 3 else None
+    delta = _safe_float(cols[5]) if len(cols) > 5 else None
+
+    if value is None:
+        for token in cols:
+            parsed = _safe_float(token)
+            if parsed is None or parsed <= 0:
+                continue
+            value = parsed
+            break
+
+    if delta is None:
+        previous_close = _safe_float(cols[4]) if len(cols) > 4 else None
+        if value is not None and previous_close not in (None, 0):
+            delta = (value - previous_close) / previous_close * 100
+        else:
+            for token in cols:
+                parsed = _safe_float(token)
+                if parsed is None:
+                    continue
+                if -30 <= parsed <= 30:
+                    delta = parsed
+                    break
+
     if value is None or delta is None:
         return None
     return value, delta
@@ -263,13 +287,63 @@ def _fetch_market_from_sina(symbol: str) -> tuple[float, float] | None:
         return None
     body = payload.split('="', 1)[1].split('"', 1)[0]
     cols = [part.strip() for part in body.split(',')]
-    if len(cols) < 4:
+    if len(cols) < 2:
         return None
-    value = _safe_float(cols[1])
-    delta = _safe_float(cols[3])
+
+    value = _safe_float(cols[1]) if len(cols) > 1 else None
+    delta = _safe_float(cols[3]) if len(cols) > 3 else None
+    if delta is None and len(cols) > 2:
+        delta = _safe_float(cols[2])
+
+    if value is None:
+        for token in cols:
+            parsed = _safe_float(token)
+            if parsed is None or parsed <= 0:
+                continue
+            value = parsed
+            break
+
+    if delta is None:
+        percent_match = re.search(r"([+-]?\d+(?:\.\d+)?)\s*%", body)
+        if percent_match:
+            delta = _safe_float(percent_match.group(1))
+
+    if delta is None and value is not None:
+        previous_close = _safe_float(cols[2]) if len(cols) > 2 else None
+        if previous_close not in (None, 0):
+            delta = (value - previous_close) / previous_close * 100
+
     if value is None or delta is None:
         return None
     return value, delta
+
+
+def _fetch_market_from_tencent_candidates(symbols: list[str]) -> tuple[float, float] | None:
+    for symbol in symbols:
+        candidate = str(symbol).strip()
+        if not candidate:
+            continue
+        try:
+            quote_data = _fetch_market_from_tencent(candidate)
+        except Exception:
+            quote_data = None
+        if quote_data is not None:
+            return quote_data
+    return None
+
+
+def _fetch_market_from_sina_candidates(symbols: list[str]) -> tuple[float, float] | None:
+    for symbol in symbols:
+        candidate = str(symbol).strip()
+        if not candidate:
+            continue
+        try:
+            quote_data = _fetch_market_from_sina(candidate)
+        except Exception:
+            quote_data = None
+        if quote_data is not None:
+            return quote_data
+    return None
 
 
 def _refresh_market_indices() -> None:
@@ -284,39 +358,31 @@ def _refresh_market_indices() -> None:
         record = {"index_code": index_code, "index_value": fallback_value, "index_delta": fallback_delta}
 
         quote = None
-        tencent_symbol = str(item.get("tencent_symbol", "")).strip()
-        if tencent_symbol:
+        preferred_sources = [str(source).strip().lower() for source in (item.get("preferred_sources") or []) if str(source).strip()]
+        if not preferred_sources:
+            preferred_sources = ["tencent", "sina", "yfinance", "stooq", "yahoo"]
+
+        for source in preferred_sources:
             try:
-                quote = _fetch_market_from_tencent(tencent_symbol)
+                if source == "tencent":
+                    tencent_symbols = item.get("tencent_symbols") or [item.get("tencent_symbol")]
+                    quote = _fetch_market_from_tencent_candidates([str(symbol or "") for symbol in tencent_symbols])
+                elif source == "sina":
+                    sina_symbols = item.get("sina_symbols") or [item.get("sina_symbol")]
+                    quote = _fetch_market_from_sina_candidates([str(symbol or "") for symbol in sina_symbols])
+                elif source == "yfinance":
+                    yfinance_symbols = item.get("yfinance_symbols") or [str(item.get("yahoo_symbol", ""))]
+                    quote = _fetch_market_from_yfinance_candidates(list(yfinance_symbols))
+                elif source == "stooq":
+                    quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
+                elif source == "yahoo":
+                    quote = _fetch_market_from_yahoo(str(item.get("yahoo_symbol", "")))
             except Exception:
                 quote = None
 
-        if quote is None:
-            sina_symbol = str(item.get("sina_symbol", "")).strip()
-            if sina_symbol:
-                try:
-                    quote = _fetch_market_from_sina(sina_symbol)
-                except Exception:
-                    quote = None
+            if quote is not None:
+                break
 
-        if quote is None:
-            try:
-                yfinance_symbols = item.get("yfinance_symbols") or [str(item.get("yahoo_symbol", ""))]
-                quote = _fetch_market_from_yfinance_candidates(list(yfinance_symbols))
-            except Exception:
-                quote = None
-
-        if quote is None:
-            try:
-                quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
-            except Exception:
-                quote = None
-
-        if quote is None:
-            try:
-                quote = _fetch_market_from_yahoo(str(item.get("yahoo_symbol", "")))
-            except Exception:
-                quote = None
 
         if quote is not None:
             close_value, change_value = quote

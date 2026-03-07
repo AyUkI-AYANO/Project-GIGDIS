@@ -11,7 +11,8 @@ Project GIGDIS 是一个全球热点地图系统的 beta4.6 迭代版本。
 ### beta4.6
 - 修复“除上证/深证/恒生外多数指数显示 N/A”的问题：增强 Yahoo Finance 抓取链路，先读取 `Ticker.info`（`regularMarketPrice/currentPrice` + `regularMarketPreviousClose/previousClose`），再回退 `fast_info` 与 `history(period="5d")`，提高全球指数在不同交易时段的可用性。
 - 扩充关键指数的 `yfinance` 备用代码池（如 `UKX.L`、`DIA`、`QQQ`、`XIU.TO`、`BOVA11.SA`、`VAS.AX` 等），当主指数代码临时不可用时自动切换，避免长期停留在 `N/A`。
-- 保持既有腾讯/新浪/Stooq/Yahoo HTTP 多源兜底逻辑不变，确保上证、深证、恒生与其他全球指数都能持续更新并正确展示。
+- 为非上证/深证/恒生指数新增“新浪国际指数”首选链路（并配置多候选代码），再回退腾讯、yfinance、Stooq、Yahoo HTTP；减少仅三大中华区指数可用、其他指数长期 `N/A` 的情况。
+- 保持多源兜底逻辑，确保上证、深证、恒生与其他全球指数都能持续更新并正确展示。
 - 全量同步版本号为 `beta4.6`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释、依赖注释）。
 
 
