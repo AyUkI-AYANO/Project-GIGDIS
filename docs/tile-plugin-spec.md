@@ -1,4 +1,4 @@
-# Plugin 规范（beta3.0）
+# Plugin 规范（beta3.1）
 
 本文档说明 Project GIGDIS 的插件体系（磁贴插件 + 主题插件）。
 
@@ -63,7 +63,7 @@ app/static/plugins/
 - 缺失 `id`/`type`：跳过该插件。
 - 主题插件加载失败时回退默认主题。
 
-## 8. 模板函数调用（beta3.0）
+## 8. 模板函数调用（beta3.1）
 
 磁贴插件 `valueTemplate/subTemplate` 支持两种占位符：
 
@@ -90,7 +90,7 @@ app/static/plugins/
 - `pick(value,path)`：提取对象子路径。
 - `truncate(value,maxLen)`：超长文本截断。
 
-## 9. externalSources（beta3.0 扩展）
+## 9. externalSources（beta3.1 扩展）
 
 `externalSources` 的每个条目支持：
 
