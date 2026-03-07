@@ -1,2 +1,2 @@
-# beta4.5 adds Yahoo Finance market data support
+# beta5.0 market stack uses Yahoo Finance as primary channel
 yfinance>=0.2.54
