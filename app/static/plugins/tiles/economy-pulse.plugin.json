@@ -1,0 +1,21 @@
+{
+  "id": "economyPulse",
+  "type": "metric",
+  "title": {
+    "zh": "经济脉冲",
+    "en": "Economy pulse"
+  },
+  "functions": [
+    "fixed",
+    "trendSign",
+    "default"
+  ],
+  "valueTemplate": {
+    "zh": "指数 {fixed:globalEconomy|2}",
+    "en": "Index {fixed:globalEconomy|2}"
+  },
+  "subTemplate": {
+    "zh": "趋势 {trendSign:globalEconomyDelta}% ｜ 主题 {default:activeTopics|'全部'}",
+    "en": "Trend {trendSign:globalEconomyDelta}% | Topics {default:activeTopics|'All'}"
+  }
+}

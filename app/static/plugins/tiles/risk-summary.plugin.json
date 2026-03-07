@@ -6,11 +6,15 @@
     "en": "Risk summary plugin"
   },
   "valueTemplate": {
-    "zh": "紧张度 {tensionScore} 分",
-    "en": "Tension {tensionScore} pts"
+    "zh": "紧张度 {fixed:tensionScore|0} 分",
+    "en": "Tension {fixed:tensionScore|0} pts"
   },
   "subTemplate": {
-    "zh": "热度变化 {heatDelta} /h",
-    "en": "Heat delta {heatDelta} /h"
-  }
+    "zh": "热度变化 {trendSign:heatDelta}/h",
+    "en": "Heat delta {trendSign:heatDelta} /h"
+  },
+  "functions": [
+    "fixed",
+    "trendSign"
+  ]
 }
