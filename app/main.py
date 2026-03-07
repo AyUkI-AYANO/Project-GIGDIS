@@ -1,4 +1,4 @@
-"""Project GIGDIS beta2.3 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta3.0 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -17,10 +17,11 @@ from pipeline import (
     aggregate_by_country,
     build_adaptive_panel,
     fetch_events,
+    filter_events_by_source_types,
     filter_events_by_topics,
     normalize_language,
 )
-from sources import AVAILABLE_TOPICS, COUNTRY_COORDS
+from sources import AVAILABLE_TOPICS, COUNTRY_COORDS, RSS_SOURCES, SOURCE_TYPES
 
 HOST = "0.0.0.0"
 PORT = 8000
@@ -191,6 +192,16 @@ def _read_topic_filters(query: dict[str, list[str]]) -> list[str]:
     return topics
 
 
+def _read_source_type_filters(query: dict[str, list[str]]) -> list[str]:
+    values = query.get("source_types", [])
+    source_types: list[str] = []
+    for value in values:
+        if not value:
+            continue
+        source_types.extend([part.strip().lower() for part in value.split(",") if part.strip()])
+    return source_types
+
+
 def _read_lang(query: dict[str, list[str]]) -> str:
     raw = query.get("lang", ["zh"])[0]
     return normalize_language(raw)
@@ -249,13 +260,52 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta2.3",
+                    "version": "1.0-beta3.0",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
                     "topics": AVAILABLE_TOPICS,
+                    "source_types": SOURCE_TYPES,
                 }
             )
+
+        if parsed.path == "/api/v1/sources":
+            return self._json(
+                {
+                    "types": SOURCE_TYPES,
+                    "sources": [
+                        {
+                            "name": source.get("name"),
+                            "url": source.get("url"),
+                            "credibility": source.get("credibility"),
+                            "type": source.get("type", "mainstream"),
+                        }
+                        for source in RSS_SOURCES
+                    ],
+                }
+            )
+
+        if parsed.path == "/api/v1/source-content":
+            source_name = query.get("source", [""])[0].strip().lower()
+            if not source_name:
+                return self._json({"error": "Missing source parameter"}, status=400)
+            events: list[HotspotEvent] = STATE["events"]
+            matched = [
+                {
+                    "title": event.title,
+                    "summary": event.summary,
+                    "country": event.country,
+                    "topic": event.topic,
+                    "source": event.source,
+                    "source_type": event.source_type,
+                    "published_at": event.published_at.isoformat(),
+                    "hotness": event.hotness,
+                    "link": event.link,
+                }
+                for event in events
+                if source_name in event.source.lower()
+            ]
+            return self._json({"source": source_name, "count": len(matched), "items": matched[:30]})
 
         if parsed.path == "/api/v1/refresh":
             limit_per_source = _read_limit_per_source(query)
@@ -273,8 +323,10 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path == "/api/v1/hotspots":
             events: list[HotspotEvent] = STATE["events"]
             topics = _read_topic_filters(query)
+            source_types = _read_source_type_filters(query)
             lang = _read_lang(query)
             filtered = filter_events_by_topics(events, topics)
+            filtered = filter_events_by_source_types(filtered, source_types)
             tension_history: list[dict] = STATE["tension_history"]  # type: ignore[assignment]
             latest_tension = tension_history[-1] if tension_history else {"score": 0, "top_regions": []}
             timeline = [
@@ -285,6 +337,7 @@ class Handler(BaseHTTPRequestHandler):
                 {
                     "last_refresh": STATE["last_refresh"],
                     "active_topics": topics,
+                    "active_source_types": source_types,
                     "lang": lang,
                     "countries": aggregate_by_country(filtered, lang=lang),
                     "global_tension": {
@@ -299,10 +352,13 @@ class Handler(BaseHTTPRequestHandler):
             events: list[HotspotEvent] = STATE["events"]
             viewport_country = query.get("viewport_country", [None])[0]
             topics = _read_topic_filters(query)
+            source_types = _read_source_type_filters(query)
             lang = _read_lang(query)
             filtered = filter_events_by_topics(events, topics)
+            filtered = filter_events_by_source_types(filtered, source_types)
             panel = build_adaptive_panel(filtered, viewport_country, lang=lang)
             panel["active_topics"] = topics
+            panel["active_source_types"] = source_types
             panel["lang"] = lang
             return self._json(panel)
 
@@ -316,7 +372,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta2.3 已启动", flush=True)
+    print("Project GIGDIS beta3.0 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

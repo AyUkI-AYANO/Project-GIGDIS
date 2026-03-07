@@ -1,4 +1,4 @@
-# Plugin 规范（beta2.3）
+# Plugin 规范（beta3.0）
 
 本文档说明 Project GIGDIS 的插件体系（磁贴插件 + 主题插件）。
 
@@ -49,12 +49,6 @@ app/static/plugins/
 }
 ```
 
-字段说明：
-
-- `backgroundImage`：可选，页面背景图 URL。
-- `variables`：可选，CSS 变量覆盖。
-- 支持覆盖按钮、卡片、标签、文本、边框等配色。
-
 ## 6. 安装步骤
 
 1. 在对应目录新增插件 JSON。
@@ -69,10 +63,9 @@ app/static/plugins/
 - 缺失 `id`/`type`：跳过该插件。
 - 主题插件加载失败时回退默认主题。
 
+## 8. 模板函数调用（beta3.0）
 
-## 8. 模板函数调用（beta2.2 新增）
-
-磁贴插件 `valueTemplate/subTemplate` 现支持两种占位符：
+磁贴插件 `valueTemplate/subTemplate` 支持两种占位符：
 
 - 路径变量：`{tensionScore}`、`{panel.global_top.0.country}`
 - 函数调用：`{fixed:globalEconomy|2}`（函数名后接 `:`，参数以 `|` 分隔）
@@ -83,40 +76,32 @@ app/static/plugins/
 {functionName:arg1|arg2|...}
 ```
 
-参数解析规则：
-
-- 如果参数可在上下文命中同名路径（如 `globalEconomy`），则取上下文值。
-- 否则按字面量处理（可使用 `'文本'` 或 `"文本"` 包裹）。
-
 ### 8.2 内置函数
 
-- `upper(value)`：转大写。
-- `lower(value)`：转小写。
-- `fixed(value, digits=2)`：数字保留指定位数。
-- `percent(value, digits=2)`：格式化百分比。
-- `add(a,b,...)`：求和。
-- `multiply(a,b,...)`：连乘。
-- `join(separator,v1,v2,...)`：按分隔符拼接。
-- `default(primary,fallback)`：空值回退。
-- `trendSign(value)`：正数自动补 `+` 号。
+- `upper(value)`、`lower(value)`
+- `fixed(value, digits=2)`、`percent(value, digits=2)`
+- `add(a,b,...)`、`multiply(a,b,...)`
+- `join(separator,v1,v2,...)`、`default(primary,fallback)`
+- `trendSign(value)`
+- `length(value)`：返回字符串/数组/对象长度。
+- `slice(value,start,end)`：字符串切片。
+- `replace(value,from,to)`：字符串替换。
+- `json(value)`：对象转 JSON 字符串。
+- `pick(value,path)`：提取对象子路径。
+- `truncate(value,maxLen)`：超长文本截断。
 
-### 8.3 示例
+## 9. externalSources（beta3.0 扩展）
 
-```json
-{
-  "id": "economyPulse",
-  "type": "metric",
-  "title": { "zh": "经济脉冲", "en": "Economy pulse" },
-  "functions": ["fixed", "trendSign", "join"],
-  "valueTemplate": {
-    "zh": "指数 {fixed:globalEconomy|2}（{trendSign:globalEconomyDelta}%）",
-    "en": "Index {fixed:globalEconomy|2} ({trendSign:globalEconomyDelta}%)"
-  },
-  "subTemplate": {
-    "zh": "筛选：{default:activeTopics|'全部'}",
-    "en": "Topics: {default:activeTopics|'All'}"
-  }
-}
-```
+`externalSources` 的每个条目支持：
 
-> 可选字段 `functions` 仅用于元数据展示，运行时真正可调用函数以系统内置函数为准。
+- `key`：注入模板上下文字段名。
+- `url`：远程接口 URL（支持模板变量）。
+- `sourceApi`：信息源桥接字段（如 `Reuters`），会自动调用 `/api/v1/source-content?source=Reuters`。
+- `method` / `headers` / `body`：自定义请求方式与请求体。
+- `responseType`：`json` / `text` / `html`。
+- `path`：对 JSON（或处理后的内容）做路径提取。
+- `regex` / `regexFlags` / `regexGroup`：正则抽取。
+- `selector` / `attr`：当 `responseType=html` 时可用 CSS 选择器提取内容。
+- `ttlSeconds`：缓存秒数。
+
+> `url` 与 `sourceApi` 二选一即可；优先使用 `sourceApi` 访问系统内信息源聚合接口。

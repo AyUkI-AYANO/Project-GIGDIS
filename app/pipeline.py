@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS beta2.0."""
+"""Hotspot extraction pipeline for Project GIGDIS beta3.0."""
 
 from __future__ import annotations
 
@@ -119,6 +119,7 @@ class Event:
     summary: str
     link: str
     source: str
+    source_type: str
     source_credibility: float
     published_at: datetime
     country: str
@@ -280,6 +281,7 @@ def _fallback_events() -> list[Event]:
                 summary=title,
                 link="",
                 source=source,
+                source_type="mainstream",
                 source_credibility=credibility,
                 published_at=now,
                 country=country,
@@ -369,6 +371,7 @@ def _inject_topic_coverage(events: list[Event]) -> list[Event]:
                     summary=title,
                     link="",
                     source=source,
+                    source_type="mainstream",
                     source_credibility=credibility,
                     published_at=now,
                     country=country,
@@ -384,9 +387,12 @@ def _inject_topic_coverage(events: list[Event]) -> list[Event]:
     return events + synthetic
 
 
-def fetch_events(limit_per_source: int = 20) -> list[Event]:
+def fetch_events(limit_per_source: int = 20, source_types: set[str] | None = None) -> list[Event]:
     events: list[Event] = []
     for source in RSS_SOURCES:
+        source_type = str(source.get("type", "mainstream"))
+        if source_types and source_type not in source_types:
+            continue
         try:
             entries = _fetch_rss_entries(source["url"])[:limit_per_source]
         except Exception:
@@ -416,6 +422,7 @@ def fetch_events(limit_per_source: int = 20) -> list[Event]:
                     summary=summary,
                     link=entry.get("link", ""),
                     source=source["name"],
+                    source_type=source_type,
                     source_credibility=source["credibility"],
                     published_at=published_at,
                     country=country,
@@ -440,6 +447,16 @@ def filter_events_by_topics(events: Iterable[Event], topics: list[str] | None) -
     if not allowed:
         return event_list
     return [event for event in event_list if event.topic.lower() in allowed]
+
+
+def filter_events_by_source_types(events: Iterable[Event], source_types: list[str] | None) -> list[Event]:
+    event_list = list(events)
+    if not source_types:
+        return event_list
+    allowed = {item.strip().lower() for item in source_types if item.strip()}
+    if not allowed:
+        return event_list
+    return [event for event in event_list if event.source_type.lower() in allowed]
 
 
 def dedupe_events(events: Iterable[Event]) -> list[Event]:
@@ -472,6 +489,7 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
                 "event_id": event.event_id,
                 "title": translate_text(event.title, lang),
                 "source": event.source,
+                "source_type": event.source_type,
                 "published_at": event.published_at.isoformat(),
                 "hotness": event.hotness,
                 "topic": event.topic,
@@ -503,6 +521,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
             "topic": event.topic,
             "topic_label": translate_topic(event.topic, lang),
             "source": event.source,
+            "source_type": event.source_type,
             "link": event.link,
         }
         for event in events[:8]
@@ -518,6 +537,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
                 "topic": event.topic,
                 "topic_label": translate_topic(event.topic, lang),
                 "source": event.source,
+                "source_type": event.source_type,
                 "link": event.link,
             }
             for event in events

@@ -2,7 +2,8 @@
   "tiles": [
     "tiles/risk-summary.plugin.json",
     "tiles/web-quote.plugin.json",
-    "tiles/economy-pulse.plugin.json"
+    "tiles/economy-pulse.plugin.json",
+    "tiles/source-bridge.plugin.json"
   ],
   "themes": [
     "themes/black-green.theme.json",

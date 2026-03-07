@@ -10,20 +10,18 @@
     "en": "Top country: {topCountryByEvents}"
   },
   "subTemplate": {
-    "zh": "示例外部内容：{default:quote|'暂无'}",
-    "en": "External content: {default:quote|'N/A'}"
+    "zh": "外部内容：{truncate:quote|42}",
+    "en": "External content: {truncate:quote|42}"
   },
   "externalSources": [
     {
       "key": "quote",
-      "url": "https://v1.hitokoto.cn/?encode=json",
-      "responseType": "json",
-      "path": "hitokoto",
+      "url": "https://v1.hitokoto.cn/?encode=text",
+      "responseType": "text",
       "ttlSeconds": 600
     }
   ],
   "functions": [
-    "upper",
-    "default"
+    "truncate"
   ]
 }

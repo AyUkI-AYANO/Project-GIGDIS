@@ -1,51 +1,31 @@
-"""Data source definitions for Project GIGDIS beta2.0."""
+"""Data source definitions for Project GIGDIS beta3.0."""
+
+SOURCE_TYPES = {
+    "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
+    "local": {"zh": "地方媒体", "en": "Local"},
+    "non_neutral": {"zh": "非中立媒体", "en": "Non-neutral"},
+}
 
 RSS_SOURCES = [
-    {
-        "name": "Reuters World News",
-        "url": "https://feeds.reuters.com/reuters/worldNews",
-        "credibility": 0.95,
-    },
-    {
-        "name": "BBC World",
-        "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
-        "credibility": 0.92,
-    },
-    {
-        "name": "Al Jazeera",
-        "url": "https://www.aljazeera.com/xml/rss/all.xml",
-        "credibility": 0.88,
-    },
-    {
-        "name": "Reuters Technology",
-        "url": "https://feeds.reuters.com/reuters/technologyNews",
-        "credibility": 0.93,
-    },
-    {
-        "name": "Reuters Business",
-        "url": "https://feeds.reuters.com/reuters/businessNews",
-        "credibility": 0.93,
-    },
-    {
-        "name": "BBC Technology",
-        "url": "http://feeds.bbci.co.uk/news/technology/rss.xml",
-        "credibility": 0.9,
-    },
-    {
-        "name": "UN News",
-        "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml",
-        "credibility": 0.9,
-    },
-    {
-        "name": "NPR World",
-        "url": "https://feeds.npr.org/1004/rss.xml",
-        "credibility": 0.89,
-    },
-    {
-        "name": "CNN World",
-        "url": "http://rss.cnn.com/rss/edition_world.rss",
-        "credibility": 0.87,
-    },
+    {"name": "Reuters World News", "url": "https://feeds.reuters.com/reuters/worldNews", "credibility": 0.95, "type": "mainstream"},
+    {"name": "BBC World", "url": "http://feeds.bbci.co.uk/news/world/rss.xml", "credibility": 0.92, "type": "mainstream"},
+    {"name": "Reuters Technology", "url": "https://feeds.reuters.com/reuters/technologyNews", "credibility": 0.93, "type": "mainstream"},
+    {"name": "Reuters Business", "url": "https://feeds.reuters.com/reuters/businessNews", "credibility": 0.93, "type": "mainstream"},
+    {"name": "BBC Technology", "url": "http://feeds.bbci.co.uk/news/technology/rss.xml", "credibility": 0.90, "type": "mainstream"},
+    {"name": "UN News", "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml", "credibility": 0.90, "type": "mainstream"},
+    {"name": "NPR World", "url": "https://feeds.npr.org/1004/rss.xml", "credibility": 0.89, "type": "mainstream"},
+    {"name": "CNN World", "url": "http://rss.cnn.com/rss/edition_world.rss", "credibility": 0.87, "type": "mainstream"},
+    {"name": "AP Top News", "url": "https://apnews.com/hub/ap-top-news?output=1", "credibility": 0.91, "type": "mainstream"},
+    {"name": "The Guardian World", "url": "https://www.theguardian.com/world/rss", "credibility": 0.87, "type": "mainstream"},
+    {"name": "NPR Politics", "url": "https://feeds.npr.org/1014/rss.xml", "credibility": 0.88, "type": "mainstream"},
+    {"name": "The Local Europe", "url": "https://www.thelocal.com/rss/", "credibility": 0.78, "type": "local"},
+    {"name": "The Times of India", "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms", "credibility": 0.76, "type": "local"},
+    {"name": "ABC News Australia", "url": "https://www.abc.net.au/news/feed/51120/rss.xml", "credibility": 0.80, "type": "local"},
+    {"name": "Nikkei Asia", "url": "https://asia.nikkei.com/rss/feed/nar", "credibility": 0.82, "type": "local"},
+    {"name": "Al Jazeera", "url": "https://www.aljazeera.com/xml/rss/all.xml", "credibility": 0.88, "type": "non_neutral"},
+    {"name": "Fox News World", "url": "https://moxie.foxnews.com/google-publisher/world.xml", "credibility": 0.72, "type": "non_neutral"},
+    {"name": "RT World News", "url": "https://www.rt.com/rss/news/", "credibility": 0.62, "type": "non_neutral"},
+    {"name": "Breitbart World", "url": "https://www.breitbart.com/feed/", "credibility": 0.58, "type": "non_neutral"},
 ]
 
 COUNTRY_KEYWORDS = {
