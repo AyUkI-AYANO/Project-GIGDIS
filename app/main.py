@@ -97,20 +97,20 @@ NON_MILITARY_ATTACK_HINTS = {
 
 
 MARKET_INDEX_SOURCES = [
-    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "fallback_value": "3,128.44", "fallback_delta": "+0.82%"},
-    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "fallback_value": "9,671.21", "fallback_delta": "+1.04%"},
-    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "fallback_value": "16,923.45", "fallback_delta": "+0.67%"},
-    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "fallback_value": "39,009.88", "fallback_delta": "-0.12%"},
-    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "fallback_value": "3,176.52", "fallback_delta": "+0.26%"},
-    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "fallback_value": "22,487.70", "fallback_delta": "+0.58%"},
-    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "fallback_value": "17,912.11", "fallback_delta": "+0.19%"},
-    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "fallback_value": "8,051.66", "fallback_delta": "+0.13%"},
-    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "fallback_value": "7,684.15", "fallback_delta": "+0.11%"},
-    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "fallback_value": "39,412.67", "fallback_delta": "-0.21%"},
-    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "fallback_value": "16,224.17", "fallback_delta": "+0.33%"},
-    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "fallback_value": "21,603.08", "fallback_delta": "+0.17%"},
-    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "fallback_value": "128,452.31", "fallback_delta": "-0.34%"},
-    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "fallback_value": "7,734.29", "fallback_delta": "+0.22%"},
+    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "fallback_value": "N/A", "fallback_delta": "N/A"},
 ]
 
 
@@ -188,6 +188,37 @@ def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
     return float(price), float(delta)
 
 
+def _fetch_market_from_tencent(symbol: str) -> tuple[float, float] | None:
+    payload = _http_get_text(f"https://qt.gtimg.cn/q={quote(symbol, safe='')}", timeout=6)
+    first_line = payload.strip().splitlines()[0] if payload.strip() else ""
+    if "\"" not in first_line:
+        return None
+    body = first_line.split('"', 1)[1].rsplit('"', 1)[0]
+    cols = body.split("~")
+    if len(cols) < 6:
+        return None
+    value = _safe_float(cols[3])
+    delta = _safe_float(cols[5])
+    if value is None or delta is None:
+        return None
+    return value, delta
+
+
+def _fetch_market_from_sina(symbol: str) -> tuple[float, float] | None:
+    payload = _http_get_text(f"https://hq.sinajs.cn/list={quote(symbol, safe='')}", timeout=6)
+    if '="' not in payload:
+        return None
+    body = payload.split('="', 1)[1].split('"', 1)[0]
+    cols = [part.strip() for part in body.split(',')]
+    if len(cols) < 4:
+        return None
+    value = _safe_float(cols[1])
+    delta = _safe_float(cols[3])
+    if value is None or delta is None:
+        return None
+    return value, delta
+
+
 def _refresh_market_indices() -> None:
     previous = {item.get("index_code"): item for item in STATE.get("market_indices", []) if isinstance(item, dict)}
     refreshed: list[dict[str, str]] = []
@@ -200,10 +231,26 @@ def _refresh_market_indices() -> None:
         record = {"index_code": index_code, "index_value": fallback_value, "index_delta": fallback_delta}
 
         quote = None
-        try:
-            quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
-        except Exception:
-            quote = None
+        tencent_symbol = str(item.get("tencent_symbol", "")).strip()
+        if tencent_symbol:
+            try:
+                quote = _fetch_market_from_tencent(tencent_symbol)
+            except Exception:
+                quote = None
+
+        if quote is None:
+            sina_symbol = str(item.get("sina_symbol", "")).strip()
+            if sina_symbol:
+                try:
+                    quote = _fetch_market_from_sina(sina_symbol)
+                except Exception:
+                    quote = None
+
+        if quote is None:
+            try:
+                quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
+            except Exception:
+                quote = None
 
         if quote is None:
             try:
