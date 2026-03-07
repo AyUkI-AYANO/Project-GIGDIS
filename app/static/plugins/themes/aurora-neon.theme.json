@@ -1,0 +1,23 @@
+{
+  "id": "auroraNeonBuiltinTheme",
+  "type": "theme",
+  "title": {
+    "zh": "极光霓虹主题",
+    "en": "Aurora Neon"
+  },
+  "backgroundImage": "https://images.unsplash.com/photo-1531306728370-e2ebd9d7bb99?auto=format&fit=crop&w=1600&q=80",
+  "variables": {
+    "--bg": "#040617",
+    "--text": "#dbeafe",
+    "--header-bg": "#1d0f3f",
+    "--header-border": "#7c3aed",
+    "--card-bg": "rgba(29,15,63,0.78)",
+    "--card-border": "#8b5cf6",
+    "--tag-bg": "rgba(59,130,246,0.25)",
+    "--tag-border": "#60a5fa",
+    "--meta-text": "#c4b5fd",
+    "--kpi-bg": "rgba(30,58,138,0.35)",
+    "--link-color": "#93c5fd",
+    "--button-bg": "#7c3aed"
+  }
+}

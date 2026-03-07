@@ -1,10 +1,17 @@
-# Project GIGDIS (beta3.1)
+# Project GIGDIS (beta3.2)
 
-Project GIGDIS 是一个全球热点地图系统的 beta3.1 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta3.2 迭代版本。
 
 
 ## Update Log
 
+
+### beta3.2
+- 修复示例插件 `source-bridge.plugin.json` 仍显示字段名（如 `sourceHeadline/sourceCountry`）的问题：模板参数解析器现会将未命中的路径参数按空值处理，避免把变量名当作字面量回填到卡片文案中。
+- 强化模板参数解析：新增对数字/布尔/null 字面量识别，函数参数在缺失路径时不会污染展示文本，插件渲染更稳定。
+- 新增 2 个内置主题插件：`aurora-neon.theme.json`（极光霓虹）与 `sand-dune.theme.json`（沙丘琥珀），并已登记到插件清单。
+- 更新主题目录说明文档，补充 beta3.2 内置主题列表。
+- 全量同步版本号为 `beta3.2`（服务端、前端标题/页眉、README、插件规范、模块注释）。
 
 
 ### beta3.1

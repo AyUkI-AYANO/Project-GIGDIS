@@ -1,0 +1,23 @@
+{
+  "id": "sandDuneBuiltinTheme",
+  "type": "theme",
+  "title": {
+    "zh": "沙丘琥珀主题",
+    "en": "Sand Dune Amber"
+  },
+  "backgroundImage": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80",
+  "variables": {
+    "--bg": "#1f160f",
+    "--text": "#ffedd5",
+    "--header-bg": "#3c2415",
+    "--header-border": "#c2410c",
+    "--card-bg": "rgba(60,36,21,0.78)",
+    "--card-border": "#ea580c",
+    "--tag-bg": "rgba(180,83,9,0.28)",
+    "--tag-border": "#fb923c",
+    "--meta-text": "#fed7aa",
+    "--kpi-bg": "rgba(120,53,15,0.38)",
+    "--link-color": "#fdba74",
+    "--button-bg": "#d97706"
+  }
+}
