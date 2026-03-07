@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS beta3.3."""
+"""Hotspot extraction pipeline for Project GIGDIS beta3.4."""
 
 from __future__ import annotations
 
@@ -10,7 +10,14 @@ from typing import Iterable
 from urllib.request import urlopen
 import xml.etree.ElementTree as ET
 
-from sources import COUNTRY_COORDS, COUNTRY_KEYWORDS, RSS_SOURCES, TOPIC_KEYWORDS
+from sources import (
+    COUNTRY_COORDS,
+    COUNTRY_KEYWORDS,
+    POLITICAL_LEANING_COLORS,
+    RSS_SOURCES,
+    TOPIC_KEYWORDS,
+    get_source_profile,
+)
 
 MIN_EVENTS_PER_TOPIC = 3
 SUPPORTED_LANGUAGES = {"zh", "en", "ru", "fr", "de"}
@@ -121,6 +128,9 @@ class Event:
     source: str
     source_type: str
     source_credibility: float
+    source_outlet: str
+    political_leaning: str
+    political_leaning_color: str
     published_at: datetime
     country: str
     lat: float
@@ -274,6 +284,7 @@ def _fallback_events() -> list[Event]:
             100 * (0.35 * credibility + 0.25 * 0.95 + 0.20 * 0.6 + 0.20 * _severity_score(topic)),
             2,
         )
+        profile = get_source_profile(source)
         result.append(
             Event(
                 event_id=_event_id(title, source + str(idx)),
@@ -283,6 +294,9 @@ def _fallback_events() -> list[Event]:
                 source=source,
                 source_type="mainstream",
                 source_credibility=credibility,
+                source_outlet=profile["outlet"],
+                political_leaning=profile["political_leaning"],
+                political_leaning_color=POLITICAL_LEANING_COLORS.get(profile["political_leaning"], "#10b981"),
                 published_at=now,
                 country=country,
                 lat=lat,
@@ -364,6 +378,7 @@ def _inject_topic_coverage(events: list[Event]) -> list[Event]:
                 100 * (0.35 * credibility + 0.25 * 0.92 + 0.20 * 0.65 + 0.20 * _severity_score(topic)),
                 2,
             )
+            profile = get_source_profile(source)
             synthetic.append(
                 Event(
                     event_id=_event_id(f"{title}-{topic}-{idx}", source),
@@ -373,6 +388,9 @@ def _inject_topic_coverage(events: list[Event]) -> list[Event]:
                     source=source,
                     source_type="mainstream",
                     source_credibility=credibility,
+                    source_outlet=profile["outlet"],
+                    political_leaning=profile["political_leaning"],
+                    political_leaning_color=POLITICAL_LEANING_COLORS.get(profile["political_leaning"], "#10b981"),
                     published_at=now,
                     country=country,
                     lat=lat,
@@ -415,6 +433,7 @@ def fetch_events(limit_per_source: int = 20, source_types: set[str] | None = Non
                 2,
             )
             lat, lon = COUNTRY_COORDS[country]
+            profile = get_source_profile(source["name"])
             events.append(
                 Event(
                     event_id=_event_id(title, source["name"]),
@@ -424,6 +443,9 @@ def fetch_events(limit_per_source: int = 20, source_types: set[str] | None = Non
                     source=source["name"],
                     source_type=source_type,
                     source_credibility=source["credibility"],
+                    source_outlet=profile["outlet"],
+                    political_leaning=profile["political_leaning"],
+                    political_leaning_color=POLITICAL_LEANING_COLORS.get(profile["political_leaning"], "#10b981"),
                     published_at=published_at,
                     country=country,
                     lat=lat,
@@ -463,13 +485,15 @@ def dedupe_events(events: Iterable[Event]) -> list[Event]:
     unique: dict[str, Event] = {}
     for event in events:
         key = f"{event.country}:{event.title.strip().lower()[:80]}"
-        if key not in unique:
+        existing = unique.get(key)
+        if existing is None or event.hotness > existing.hotness:
             unique[key] = event
     return sorted(unique.values(), key=lambda item: item.hotness, reverse=True)
 
 
 def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict]:
     bucket: dict[str, dict] = {}
+    merged_events: dict[str, dict] = {}
     for event in events:
         if event.country not in bucket:
             bucket[event.country] = {
@@ -484,19 +508,50 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
         record = bucket[event.country]
         record["event_count"] += 1
         record["avg_hotness"] += event.hotness
-        record["top_events"].append(
-            {
+
+        event_key = f"{event.country}:{event.title.strip().lower()[:80]}"
+        source_item = {
+            "source": event.source,
+            "source_outlet": event.source_outlet,
+            "source_type": event.source_type,
+            "political_leaning": event.political_leaning,
+            "political_leaning_label": event.political_leaning,
+            "political_leaning_color": event.political_leaning_color,
+            "published_at": event.published_at.isoformat(),
+            "link": event.link,
+            "hotness": event.hotness,
+        }
+
+        if event_key not in merged_events:
+            merged_events[event_key] = {
                 "event_id": event.event_id,
+                "country": event.country,
                 "title": translate_text(event.title, lang),
                 "source": event.source,
+                "source_outlet": event.source_outlet,
                 "source_type": event.source_type,
                 "published_at": event.published_at.isoformat(),
                 "hotness": event.hotness,
                 "topic": event.topic,
                 "topic_label": translate_topic(event.topic, lang),
                 "link": event.link,
+                "sources": [source_item],
             }
-        )
+            continue
+
+        current = merged_events[event_key]
+        current["sources"].append(source_item)
+        if event.hotness > current["hotness"]:
+            current["source"] = event.source
+            current["source_outlet"] = event.source_outlet
+            current["source_type"] = event.source_type
+            current["published_at"] = event.published_at.isoformat()
+            current["hotness"] = event.hotness
+            current["link"] = event.link
+
+    for event in merged_events.values():
+        event["sources"] = sorted(event["sources"], key=lambda item: item["hotness"], reverse=True)
+        bucket[event["country"]]["top_events"].append(event)
 
     result = []
     for record in bucket.values():
@@ -513,35 +568,43 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
 
 
 def build_adaptive_panel(events: list[Event], viewport_country: str | None = None, lang: str = "zh") -> dict:
+    grouped = aggregate_by_country(events, lang=lang)
+    flattened: list[dict] = []
+    for country in grouped:
+        flattened.extend(country.get("top_events", []))
+    flattened = sorted(flattened, key=lambda item: item["hotness"], reverse=True)
+
     global_top = [
         {
-            "title": translate_text(event.title, lang),
-            "country": event.country,
-            "hotness": event.hotness,
-            "topic": event.topic,
-            "topic_label": translate_topic(event.topic, lang),
-            "source": event.source,
-            "source_type": event.source_type,
-            "link": event.link,
+            "title": item["title"],
+            "country": item["country"],
+            "hotness": item["hotness"],
+            "topic": item["topic"],
+            "topic_label": item["topic_label"],
+            "source": item["source"],
+            "source_type": item["source_type"],
+            "link": item["link"],
+            "sources": item.get("sources", []),
         }
-        for event in events[:8]
+        for item in flattened[:8]
     ]
 
     viewport_related = []
     if viewport_country:
         viewport_related = [
             {
-                "title": translate_text(event.title, lang),
-                "country": event.country,
-                "hotness": event.hotness,
-                "topic": event.topic,
-                "topic_label": translate_topic(event.topic, lang),
-                "source": event.source,
-                "source_type": event.source_type,
-                "link": event.link,
+                "title": item["title"],
+                "country": item["country"],
+                "hotness": item["hotness"],
+                "topic": item["topic"],
+                "topic_label": item["topic_label"],
+                "source": item["source"],
+                "source_type": item["source_type"],
+                "link": item["link"],
+                "sources": item.get("sources", []),
             }
-            for event in events
-            if event.country.lower() == viewport_country.lower()
+            for item in flattened
+            if item["country"].lower() == viewport_country.lower()
         ][:8]
 
     return {
