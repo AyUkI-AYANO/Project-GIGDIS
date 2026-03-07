@@ -1,0 +1,43 @@
+{
+  "id": "sourceBridge",
+  "type": "text",
+  "title": {
+    "zh": "信息源桥接",
+    "en": "Source bridge"
+  },
+  "valueTemplate": {
+    "zh": "路透聚焦：{truncate:sourceHeadline|48}",
+    "en": "Reuters focus: {truncate:sourceHeadline|48}"
+  },
+  "subTemplate": {
+    "zh": "条目数 {sourceCount} ｜ 国家 {default:sourceCountry|'暂无'}",
+    "en": "Count {sourceCount} | Country {default:sourceCountry|'N/A'}"
+  },
+  "externalSources": [
+    {
+      "key": "sourceHeadline",
+      "sourceApi": "Reuters",
+      "responseType": "json",
+      "path": "items.0.title",
+      "ttlSeconds": 300
+    },
+    {
+      "key": "sourceCountry",
+      "sourceApi": "Reuters",
+      "responseType": "json",
+      "path": "items.0.country",
+      "ttlSeconds": 300
+    },
+    {
+      "key": "sourceCount",
+      "sourceApi": "Reuters",
+      "responseType": "json",
+      "path": "count",
+      "ttlSeconds": 300
+    }
+  ],
+  "functions": [
+    "truncate",
+    "default"
+  ]
+}
