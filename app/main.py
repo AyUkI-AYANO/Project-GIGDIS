@@ -10,7 +10,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Event, Thread
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import urlopen
 
 from pipeline import Event as HotspotEvent
@@ -96,20 +96,20 @@ NON_MILITARY_ATTACK_HINTS = {
 
 
 MARKET_INDEX_SOURCES = [
-    {"index_code": "000001.SH", "symbol": "^shc", "fallback_value": "3,128.44", "fallback_delta": "+0.82%"},
-    {"index_code": "399001.SZ", "symbol": "^szc", "fallback_value": "9,671.21", "fallback_delta": "+1.04%"},
-    {"index_code": "HSI", "symbol": "^hsi", "fallback_value": "16,923.45", "fallback_delta": "+0.67%"},
-    {"index_code": "N225", "symbol": "^nkx", "fallback_value": "39,009.88", "fallback_delta": "-0.12%"},
-    {"index_code": "STI", "symbol": "^sti", "fallback_value": "3,176.52", "fallback_delta": "+0.26%"},
-    {"index_code": "NIFTY", "symbol": "^nif", "fallback_value": "22,487.70", "fallback_delta": "+0.58%"},
-    {"index_code": "DAX", "symbol": "^dax", "fallback_value": "17,912.11", "fallback_delta": "+0.19%"},
-    {"index_code": "PX1", "symbol": "^cac", "fallback_value": "8,051.66", "fallback_delta": "+0.13%"},
-    {"index_code": "UKX", "symbol": "^ukx", "fallback_value": "7,684.15", "fallback_delta": "+0.11%"},
-    {"index_code": "DJI", "symbol": "^dji", "fallback_value": "39,412.67", "fallback_delta": "-0.21%"},
-    {"index_code": "IXIC", "symbol": "^ndq", "fallback_value": "16,224.17", "fallback_delta": "+0.33%"},
-    {"index_code": "TSX", "symbol": "^tsx", "fallback_value": "21,603.08", "fallback_delta": "+0.17%"},
-    {"index_code": "IBOV", "symbol": "^bvp", "fallback_value": "128,452.31", "fallback_delta": "-0.34%"},
-    {"index_code": "XJO", "symbol": "^asx", "fallback_value": "7,734.29", "fallback_delta": "+0.22%"},
+    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "fallback_value": "3,128.44", "fallback_delta": "+0.82%"},
+    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "fallback_value": "9,671.21", "fallback_delta": "+1.04%"},
+    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "fallback_value": "16,923.45", "fallback_delta": "+0.67%"},
+    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "fallback_value": "39,009.88", "fallback_delta": "-0.12%"},
+    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "fallback_value": "3,176.52", "fallback_delta": "+0.26%"},
+    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "fallback_value": "22,487.70", "fallback_delta": "+0.58%"},
+    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "fallback_value": "17,912.11", "fallback_delta": "+0.19%"},
+    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "fallback_value": "8,051.66", "fallback_delta": "+0.13%"},
+    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "fallback_value": "7,684.15", "fallback_delta": "+0.11%"},
+    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "fallback_value": "39,412.67", "fallback_delta": "-0.21%"},
+    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "fallback_value": "16,224.17", "fallback_delta": "+0.33%"},
+    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "fallback_value": "21,603.08", "fallback_delta": "+0.17%"},
+    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "fallback_value": "128,452.31", "fallback_delta": "-0.34%"},
+    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "fallback_value": "7,734.29", "fallback_delta": "+0.22%"},
 ]
 
 
@@ -122,6 +122,36 @@ def _format_market_delta(delta: float) -> str:
     return f"{sign}{delta:.2f}%"
 
 
+
+
+def _fetch_market_from_stooq(symbol: str) -> tuple[float, float] | None:
+    with urlopen(f"https://stooq.com/q/l/?s={symbol}&f=sd2t2ohlcvncp&e=csv", timeout=6) as response:
+        payload = response.read().decode("utf-8", errors="ignore").strip().splitlines()
+    if len(payload) < 2:
+        return None
+    cols = payload[1].split(",")
+    close_price = cols[6] if len(cols) > 6 else ""
+    percent_change = cols[10] if len(cols) > 10 else ""
+    return float(close_price), float(percent_change)
+
+
+def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
+    encoded_symbol = quote(symbol, safe="")
+    with urlopen(
+        f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={encoded_symbol}",
+        timeout=6,
+    ) as response:
+        payload = json.loads(response.read().decode("utf-8", errors="ignore"))
+    result = ((payload or {}).get("quoteResponse") or {}).get("result") or []
+    if not result:
+        return None
+    quote_item = result[0] if isinstance(result[0], dict) else {}
+    price = quote_item.get("regularMarketPrice")
+    delta = quote_item.get("regularMarketChangePercent")
+    if price is None or delta is None:
+        return None
+    return float(price), float(delta)
+
 def _refresh_market_indices() -> None:
     previous = {item.get("index_code"): item for item in STATE.get("market_indices", []) if isinstance(item, dict)}
     refreshed: list[dict[str, str]] = []
@@ -133,19 +163,22 @@ def _refresh_market_indices() -> None:
         fallback_delta = str(prior.get("index_delta") or item["fallback_delta"])
         record = {"index_code": index_code, "index_value": fallback_value, "index_delta": fallback_delta}
 
+        quote = None
         try:
-            with urlopen(f"https://stooq.com/q/l/?s={item['symbol']}&f=sd2t2ohlcvncp&e=csv", timeout=6) as response:
-                payload = response.read().decode("utf-8", errors="ignore").strip().splitlines()
-            if len(payload) >= 2:
-                cols = payload[1].split(",")
-                close_price = cols[6] if len(cols) > 6 else ""
-                percent_change = cols[10] if len(cols) > 10 else ""
-                close_value = float(close_price)
-                change_value = float(percent_change)
-                record["index_value"] = _format_market_value(close_value)
-                record["index_delta"] = _format_market_delta(change_value)
+            quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
         except Exception:
-            pass
+            quote = None
+
+        if quote is None:
+            try:
+                quote = _fetch_market_from_yahoo(str(item.get("yahoo_symbol", "")))
+            except Exception:
+                quote = None
+
+        if quote is not None:
+            close_value, change_value = quote
+            record["index_value"] = _format_market_value(close_value)
+            record["index_delta"] = _format_market_delta(change_value)
 
         refreshed.append(record)
 

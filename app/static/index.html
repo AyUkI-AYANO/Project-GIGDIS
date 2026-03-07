@@ -423,7 +423,7 @@
       }
       async function renderTiles(snapshot){
         const root = document.getElementById('tiles-grid');
-        const context = { ...snapshot, tensionScore: snapshot.tensionScore || 0, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, selectedCountry:selectedCountry || '', lang:currentLang, refreshMinutes, panel:panelSnapshot, hotspots:hotspotsSnapshot, markets: GLOBAL_MARKETS, nowISO:new Date().toISOString() };
+        const context = { ...snapshot, tensionScore: snapshot.tensionScore || 0, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, selectedCountry:selectedCountry || '', lang:currentLang, refreshMinutes, panel:panelSnapshot, hotspots:hotspotsSnapshot, markets: globalMarkets, nowISO:new Date().toISOString() };
         const enabledTiles = tileRegistry.filter(tile => tileConfig[tile.id]);
         const entries = await Promise.all(enabledTiles.map(async (tile) => {
           const output = await Promise.resolve(tile.render(context) || {});
