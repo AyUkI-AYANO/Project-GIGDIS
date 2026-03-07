@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS beta2.0</title>
+    <title>Project GIGDIS beta2.1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; --button-bg:#0284c7; }
@@ -41,9 +41,9 @@
       li { margin-bottom:8px; line-height:1.35; }
       li a { color:var(--link-color); margin-left:6px; }
       .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; }
-      .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; }
+      .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; }
       .kpi .label { font-size:11px; color:var(--meta-text); }
-      .kpi .value { font-weight:700; font-size:30px; line-height:1; }
+      .kpi .value { font-weight:700; font-size:30px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:clip; max-width:100%; }
       .kpi-toggle { width:100%; background:transparent; border:1px solid var(--card-border); color:var(--meta-text); font-size:11px; padding:4px; }
       .kpi-details { display:none; border-top:1px dashed var(--card-border); padding-top:6px; }
       .kpi.expanded .kpi-details { display:block; }
@@ -70,7 +70,7 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.0</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.1</div>
       <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><div id="settings-group" class="settings-group"><button id="settings-toggle" class="secondary" type="button"></button><div id="settings-menu" class="settings-menu"><div class="settings-item"><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select></div><div class="settings-item"><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select></div><div class="settings-item"><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /></div><div class="settings-item"><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select></div><div class="settings-item"><button id="upload-background" class="secondary" type="button"></button><button id="reset-background" class="secondary" type="button"></button><input id="background-file-input" type="file" accept="image/*" style="display:none" /></div><div class="settings-item"><button id="toggle-theme" class="secondary" type="button"></button></div></div></div><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
@@ -407,6 +407,19 @@
         vals.forEach((v,i)=>{ const x=(i/Math.max(vals.length-1,1))*(canvas.width-10)+5; const y=(1-(v-min)/span)*(canvas.height-12)+6; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
         ctx.stroke();
       }
+      function fitKpiValueText(el){
+        if (!el) return;
+        const maxSize = 30;
+        const minSize = 16;
+        el.style.fontSize = `${maxSize}px`;
+        while (el.scrollWidth > el.clientWidth && parseFloat(el.style.fontSize) > minSize) {
+          const nextSize = parseFloat(el.style.fontSize) - 1;
+          el.style.fontSize = `${nextSize}px`;
+        }
+      }
+      function fitAllKpiValues(){
+        document.querySelectorAll('.kpi .value').forEach(fitKpiValueText);
+      }
       function renderOverviewDetails(countries, tension, globalEconomy){
         const byEvents = [...countries].sort((a,b)=>b.event_count-a.event_count).slice(0,5);
         const byHotness = [...countries].sort((a,b)=>b.avg_hotness-a.avg_hotness).slice(0,5);
@@ -433,6 +446,7 @@
         document.getElementById('kpi-hotness').textContent = String(avgHotness);
         document.getElementById('kpi-tension').textContent = String(tension.score ?? 0);
         document.getElementById('kpi-global-economy').textContent = String(globalEconomy.indexScore);
+        fitAllKpiValues();
         renderOverviewDetails(countries, tension || {}, globalEconomy);
       }
       function renderList(el, items){ el.innerHTML = ''; if (!items.length) { el.innerHTML = `<li>${t().noData}</li>`; return; } items.forEach(item => { const li = document.createElement('li'); const label = item.topic_label || topicLabel(item.topic); li.appendChild(document.createTextNode(`${item.country}｜${label}｜${item.hotness}${t().points}｜${item.title}`)); if (item.link) { const link = document.createElement('a'); link.href = item.link; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = t().viewSource; li.appendChild(link); } el.appendChild(li); }); }
@@ -540,6 +554,8 @@
         reader.readAsDataURL(file);
       });
       document.querySelectorAll('.kpi-toggle').forEach(btn => btn.addEventListener('click', () => { const card = btn.closest('.kpi'); card.classList.toggle('expanded'); btn.textContent = card.classList.contains('expanded') ? t().detailCollapse : t().detailExpand; }));
+
+      window.addEventListener('resize', fitAllKpiValues);
 
       (async function init(){
         setupSettingsMenu();
