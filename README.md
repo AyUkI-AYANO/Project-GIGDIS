@@ -1,6 +1,6 @@
-# Project GIGDIS (beta4.4)
+# Project GIGDIS (beta4.5)
 
-Project GIGDIS 是一个全球热点地图系统的 beta4.4 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta4.5 迭代版本。
 
 
 ## Update Log
@@ -8,11 +8,11 @@ Project GIGDIS 是一个全球热点地图系统的 beta4.4 迭代版本。
 
 
 
-### beta4.4
+### beta4.5
 - 修复证券指数与全球经济指数“显示卡住/不更新”的问题：后端指数刷新链路新增 `yfinance`（Yahoo Finance Python API）作为稳定数据源，并优先按交易日历史收盘价计算涨跌幅。
 - Yahoo Finance 接入采用 `Ticker(symbol).history(period="5d", interval="1d")`，当可用数据不足时自动降级到既有 Yahoo Quote HTTP 接口与其他行情源，避免单源失败导致全局停滞。
 - 保持前端显示逻辑不变，后端返回的 `markets` 数据可持续覆盖地图交易所弹窗与“全球经济指数”权重计算，确保展示与实际行情同步。
-- 依赖清单新增 `yfinance`，并全量同步版本号为 `beta4.4`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释）。
+- 依赖清单新增 `yfinance`，并全量同步版本号为 `beta4.5`（服务端、前端标题/页眉、README、插件规范、主题文档、模块注释）。
 
 
 ### beta4.3

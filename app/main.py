@@ -1,4 +1,4 @@
-"""Project GIGDIS beta4.4 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta4.5 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -99,20 +99,20 @@ NON_MILITARY_ATTACK_HINTS = {
 
 
 MARKET_INDEX_SOURCES = [
-    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "fallback_value": "N/A", "fallback_delta": "N/A"},
-    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "000001.SH", "stooq_symbol": "^shc", "yahoo_symbol": "000001.SS", "yfinance_symbols": ["000001.SS"], "tencent_symbol": "s_sh000001", "sina_symbol": "s_sh000001", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "399001.SZ", "stooq_symbol": "^szc", "yahoo_symbol": "399001.SZ", "yfinance_symbols": ["399001.SZ"], "tencent_symbol": "s_sz399001", "sina_symbol": "s_sz399001", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "HSI", "stooq_symbol": "^hsi", "yahoo_symbol": "^HSI", "yfinance_symbols": ["^HSI"], "tencent_symbol": "s_hkHSI", "sina_symbol": "s_hkHSI", "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "N225", "stooq_symbol": "^nkx", "yahoo_symbol": "^N225", "yfinance_symbols": ["^N225"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "STI", "stooq_symbol": "^sti", "yahoo_symbol": "^STI", "yfinance_symbols": ["^STI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "NIFTY", "stooq_symbol": "^nif", "yahoo_symbol": "^NSEI", "yfinance_symbols": ["^NSEI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DAX", "stooq_symbol": "^dax", "yahoo_symbol": "^GDAXI", "yfinance_symbols": ["^GDAXI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "PX1", "stooq_symbol": "^cac", "yahoo_symbol": "^FCHI", "yfinance_symbols": ["^FCHI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "UKX", "stooq_symbol": "^ukx", "yahoo_symbol": "^FTSE", "yfinance_symbols": ["^FTSE", "^UKX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "DJI", "stooq_symbol": "^dji", "yahoo_symbol": "^DJI", "yfinance_symbols": ["^DJI"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IXIC", "stooq_symbol": "^ndq", "yahoo_symbol": "^IXIC", "yfinance_symbols": ["^IXIC"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "TSX", "stooq_symbol": "^tsx", "yahoo_symbol": "^GSPTSE", "yfinance_symbols": ["^GSPTSE", "^TSX"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "IBOV", "stooq_symbol": "^bvp", "yahoo_symbol": "^BVSP", "yfinance_symbols": ["^BVSP"], "fallback_value": "N/A", "fallback_delta": "N/A"},
+    {"index_code": "XJO", "stooq_symbol": "^asx", "yahoo_symbol": "^AXJO", "yfinance_symbols": ["^AXJO"], "fallback_value": "N/A", "fallback_delta": "N/A"},
 ]
 
 
@@ -215,6 +215,20 @@ def _fetch_market_from_yfinance(symbol: str) -> tuple[float, float] | None:
     return latest_close, delta
 
 
+def _fetch_market_from_yfinance_candidates(symbols: list[str]) -> tuple[float, float] | None:
+    for symbol in symbols:
+        symbol = str(symbol).strip()
+        if not symbol:
+            continue
+        try:
+            quote = _fetch_market_from_yfinance(symbol)
+        except Exception:
+            quote = None
+        if quote is not None:
+            return quote
+    return None
+
+
 def _fetch_market_from_tencent(symbol: str) -> tuple[float, float] | None:
     payload = _http_get_text(f"https://qt.gtimg.cn/q={quote(symbol, safe='')}", timeout=6)
     first_line = payload.strip().splitlines()[0] if payload.strip() else ""
@@ -275,13 +289,14 @@ def _refresh_market_indices() -> None:
 
         if quote is None:
             try:
-                quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
+                yfinance_symbols = item.get("yfinance_symbols") or [str(item.get("yahoo_symbol", ""))]
+                quote = _fetch_market_from_yfinance_candidates(list(yfinance_symbols))
             except Exception:
                 quote = None
 
         if quote is None:
             try:
-                quote = _fetch_market_from_yfinance(str(item.get("yahoo_symbol", "")))
+                quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
             except Exception:
                 quote = None
 
@@ -472,7 +487,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.4",
+                    "version": "1.0-beta4.5",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -600,7 +615,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.4 已启动", flush=True)
+    print("Project GIGDIS beta4.5 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

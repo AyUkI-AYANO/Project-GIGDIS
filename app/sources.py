@@ -1,4 +1,4 @@
-"""Data source definitions for Project GIGDIS beta4.4."""
+"""Data source definitions for Project GIGDIS beta4.5."""
 
 SOURCE_TYPES = {
     "mainstream": {"zh": "主流媒体", "en": "Mainstream"},
