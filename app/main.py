@@ -1,4 +1,4 @@
-"""Project GIGDIS beta4.3 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta4.4 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,8 @@ from threading import Event, Thread
 from urllib.error import URLError
 from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import ProxyHandler, Request, build_opener, urlopen
+
+import importlib
 
 from pipeline import Event as HotspotEvent
 from pipeline import (
@@ -188,6 +190,31 @@ def _fetch_market_from_yahoo(symbol: str) -> tuple[float, float] | None:
     return float(price), float(delta)
 
 
+def _fetch_market_from_yfinance(symbol: str) -> tuple[float, float] | None:
+    yf_module = importlib.import_module("yfinance")
+    ticker = yf_module.Ticker(symbol)
+    history = ticker.history(period="5d", interval="1d", auto_adjust=False, timeout=5)
+    if history.empty or "Close" not in history:
+        return None
+
+    closes = history["Close"].dropna()
+    if closes.empty:
+        return None
+
+    latest_close = float(closes.iloc[-1])
+    previous_close = float(closes.iloc[-2]) if len(closes) >= 2 else None
+    if previous_close in (None, 0):
+        fast_info = getattr(ticker, "fast_info", None) or {}
+        candidate_previous = fast_info.get("previous_close") if isinstance(fast_info, dict) else None
+        parsed_previous = _safe_float(str(candidate_previous))
+        previous_close = parsed_previous if parsed_previous not in (None, 0) else None
+    if previous_close in (None, 0):
+        return latest_close, 0.0
+
+    delta = (latest_close - float(previous_close)) / float(previous_close) * 100
+    return latest_close, delta
+
+
 def _fetch_market_from_tencent(symbol: str) -> tuple[float, float] | None:
     payload = _http_get_text(f"https://qt.gtimg.cn/q={quote(symbol, safe='')}", timeout=6)
     first_line = payload.strip().splitlines()[0] if payload.strip() else ""
@@ -249,6 +276,12 @@ def _refresh_market_indices() -> None:
         if quote is None:
             try:
                 quote = _fetch_market_from_stooq(str(item.get("stooq_symbol", "")))
+            except Exception:
+                quote = None
+
+        if quote is None:
+            try:
+                quote = _fetch_market_from_yfinance(str(item.get("yahoo_symbol", "")))
             except Exception:
                 quote = None
 
@@ -439,7 +472,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta4.3",
+                    "version": "1.0-beta4.4",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -567,7 +600,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta4.3 已启动", flush=True)
+    print("Project GIGDIS beta4.4 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)
