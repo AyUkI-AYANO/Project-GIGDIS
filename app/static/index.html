@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project GIGDIS beta2.2</title>
+    <title>Project GIGDIS beta2.3</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
       :root { --bg:#0b1220; --text:#e2e8f0; --header-bg:#111b30; --header-border:#22314f; --card-bg:#111827; --card-border:#273449; --tag-bg:#1e293b; --tag-border:#334155; --meta-text:#93c5fd; --kpi-bg:#0f172a; --link-color:#7dd3fc; --button-bg:#0284c7; }
       body[data-theme='light'] { --bg:#f1f5f9; --text:#0f172a; --header-bg:#e2e8f0; --header-border:#cbd5e1; --card-bg:#fff; --card-border:#d1d5db; --tag-bg:#f1f5f9; --tag-border:#cbd5e1; --meta-text:#334155; --kpi-bg:#f8fafc; --link-color:#0369a1; --button-bg:#0284c7; }
       * { box-sizing: border-box; }
-      body { margin:0; font-family:"Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+      body { margin:0; font-family:"Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; transition:background-color .28s ease, color .28s ease; }
       header { padding:14px 20px; background:var(--header-bg); border-bottom:1px solid var(--header-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
       .brand { font-size:18px; font-weight:700; display:flex; align-items:center; gap:10px; }
       .logo { width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-size:16px; background:radial-gradient(circle at 30% 30%, #22d3ee 0%, #2563eb 45%, #1e1b4b 100%); box-shadow:0 0 16px rgba(34,211,238,0.3); }
@@ -18,7 +18,7 @@
       .map-column { min-height:0; display:grid; grid-template-rows:minmax(320px,1fr) auto; gap:10px; }
       #map { height:100%; border-radius:10px; overflow:hidden; border:1px solid var(--header-border); position:sticky; top:0; }
       .sidebar { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:4px; }
-      .card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:10px; padding:12px; }
+      .card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:10px; padding:12px; transition:background-color .24s ease, border-color .24s ease, transform .2s ease; }
       .card h3 { margin:0 0 8px; font-size:16px; }
       .filters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
       .filter-button { background:var(--tag-bg); border:1px solid var(--tag-border); color:var(--text); border-radius:999px; padding:5px 11px; font-size:12px; transition:transform .16s ease, filter .16s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease; }
@@ -41,15 +41,16 @@
       li { margin-bottom:8px; line-height:1.35; }
       li a { color:var(--link-color); margin-left:6px; }
       .kpis { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; }
-      .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; }
+      .kpi { background:var(--kpi-bg); border:1px solid var(--card-border); border-radius:8px; padding:8px; display:flex; flex-direction:column; gap:6px; min-width:0; transition:background-color .24s ease, border-color .24s ease, box-shadow .24s ease; }
       .kpi .label { font-size:11px; color:var(--meta-text); }
       .kpi .value { font-weight:700; font-size:30px; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:clip; max-width:100%; min-height:30px; display:flex; align-items:flex-end; }
       .kpi-toggle { width:100%; background:transparent; border:1px solid var(--card-border); color:var(--meta-text); font-size:11px; padding:4px; margin-top:auto; }
       .kpi-details { display:none; border-top:1px dashed var(--card-border); padding-top:6px; }
-      .kpi.expanded .kpi-details { display:block; }
+      .kpi.expanded .kpi-details { display:block; animation:fadeSlideIn .24s ease; }
       .kpi-details h4 { margin:0 0 4px; font-size:11px; color:var(--meta-text); }
       .kpi-details ul { margin:0 0 6px; font-size:11px; padding-left:16px; }
       .kpi-details canvas { width:100%; height:58px; border-radius:6px; background:rgba(30,41,59,0.25); }
+      @keyframes fadeSlideIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
       .tiles-panel { padding:0; overflow:hidden; }
       .tiles-header { display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--card-border); }
       .tiles-content { padding:10px; display:flex; flex-direction:column; gap:8px; }
@@ -70,7 +71,7 @@
   </head>
   <body data-theme="dark">
     <header>
-      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.2</div>
+      <div class="brand"><span class="logo">🌐</span>Project GIGDIS · beta2.3</div>
       <div class="actions"><select id="lang-select"></select><button id="manual-refresh" type="button"></button><div id="settings-group" class="settings-group"><button id="settings-toggle" class="secondary" type="button"></button><div id="settings-menu" class="settings-menu"><div class="settings-item"><label for="refresh-limit" class="meta" id="refresh-limit-label"></label><select id="refresh-limit"></select></div><div class="settings-item"><label for="refresh-interval" class="meta" id="refresh-interval-label"></label><select id="refresh-interval"></select></div><div class="settings-item"><label for="market-toggle" class="meta" id="market-toggle-label"></label><input id="market-toggle" type="checkbox" checked /></div><div class="settings-item"><label for="theme-plugin-select" class="meta" id="theme-plugin-label"></label><select id="theme-plugin-select"></select></div><div class="settings-item"><button id="upload-background" class="secondary" type="button"></button><button id="reset-background" class="secondary" type="button"></button><input id="background-file-input" type="file" accept="image/*" style="display:none" /></div><div class="settings-item"><button id="toggle-theme" class="secondary" type="button"></button></div></div></div><span id="refresh" class="meta"></span></div>
     </header>
     <main class="layout">
@@ -107,8 +108,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
       const I18N = {
-        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', globalEconomy:'全球经济指数', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', exchangeRanking:'交易所加权排名', refreshNow:'手动刷新', settings:'设置', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', conflictZones:'冲突地区', conflictIntensity:'冲突强度', showMarkets:'显示交易所与指数', themePlugin:'主题插件', uploadBackground:'本地背景图', resetBackground:'恢复默认背景图', backgroundReadError:'背景图读取失败' },
-        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', globalEconomy:'Global economic index', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', exchangeRanking:'Weighted exchange ranking', refreshNow:'Refresh now', settings:'Settings', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', conflictZones:'Conflict zones', conflictIntensity:'Conflict intensity', showMarkets:'Show exchanges & indices', themePlugin:'Theme plugin', uploadBackground:'Local background', resetBackground:'Reset default background', backgroundReadError:'Failed to read background image' }
+        zh: { lang:'中文', switchLight:'切换为浅色地图', switchDark:'切换为深色地图', loading:'加载中...', filters:'筛选器', clear:'清空', all:'全部', current:'当前', overview:'数据概览', countries:'国家数量', events:'新闻总数', hotness:'平均热度', tension:'全球紧张度', globalEconomy:'全球经济指数', hotspots:'主要热点区域', trend:'每小时变化', globalTop:'全局 Top 8 热点', viewport:'当前区域热点', viewportTip:'点击地图国家圆点后自动更新（最多8条）', noData:'暂无数据', viewSource:'查看原文', lastRefresh:'上次刷新', points:'分', eventCount:'事件数', mainType:'主类型', tiles:'磁贴中心', collapse:'折叠', expand:'展开', tileSelector:'展开磁贴列表选择', hideSelector:'收起磁贴列表', tileDatetime:'时间日期', tileHeatTrend:'新闻平均热度变化', tileTensionTrend:'紧张度变化', tileActiveTopics:'当前主题', perHour:'每小时', comparedToPrev:'较上次刷新', detailExpand:'展开详情', detailCollapse:'折叠详情', topCountries:'主要国家列表', exchangeRanking:'交易所加权排名', refreshNow:'手动刷新', settings:'设置', refreshCount:'每次刷新新闻数', refreshEvery:'自动刷新', minutes:'分钟', items:'条', refreshFailed:'刷新失败', showMarkets:'显示交易所与指数', themePlugin:'主题插件', uploadBackground:'本地背景图', resetBackground:'恢复默认背景图', backgroundReadError:'背景图读取失败' },
+        en: { lang:'English', switchLight:'Switch to light map', switchDark:'Switch to dark map', loading:'Loading...', filters:'Filters', clear:'Clear', all:'All', current:'Current', overview:'Overview', countries:'Countries', events:'Total news', hotness:'Avg hotness', tension:'Global tension', globalEconomy:'Global economic index', hotspots:'Top hotspot regions', trend:'Hourly trend', globalTop:'Global Top 8', viewport:'Regional highlights', viewportTip:'Click a country marker to update (up to 8)', noData:'No data', viewSource:'Read source', lastRefresh:'Last refresh', points:'pts', eventCount:'Events', mainType:'Main topic', tiles:'Tile center', collapse:'Collapse', expand:'Expand', tileSelector:'Expand tile selector', hideSelector:'Hide tile selector', tileDatetime:'Date & time', tileHeatTrend:'Average heat trend', tileTensionTrend:'Tension trend', tileActiveTopics:'Active topics', perHour:'/hour', comparedToPrev:'vs previous refresh', detailExpand:'Expand details', detailCollapse:'Collapse details', topCountries:'Top countries', exchangeRanking:'Weighted exchange ranking', refreshNow:'Refresh now', settings:'Settings', refreshCount:'News per refresh', refreshEvery:'Auto refresh', minutes:'min', items:'items', refreshFailed:'Refresh failed', showMarkets:'Show exchanges & indices', themePlugin:'Theme plugin', uploadBackground:'Local background', resetBackground:'Reset default background', backgroundReadError:'Failed to read background image' }
       };
       const TOPIC_LABELS = { military:{zh:'军事',en:'military'}, politics:{zh:'政治',en:'politics'}, technology:{zh:'科技',en:'technology'}, science:{zh:'科学',en:'science'}, disaster:{zh:'灾害',en:'disaster'}, 'public-health':{zh:'公共卫生',en:'public-health'}, diplomacy:{zh:'外交',en:'diplomacy'}, economy:{zh:'经济',en:'economy'}, general:{zh:'综合',en:'general'} };
       const THEME_KEY='gigdis-theme', LANG_KEY='gigdis-lang', TILE_PREF_KEY='gigdis-tile-config', REFRESH_INTERVAL_KEY='gigdis-refresh-minutes', REFRESH_LIMIT_KEY='gigdis-refresh-limit', MARKET_TOGGLE_KEY='gigdis-show-markets', THEME_PLUGIN_KEY='gigdis-theme-plugin', CUSTOM_BACKGROUND_KEY='gigdis-custom-background';
@@ -123,11 +124,10 @@
       const map = L.map('map').setView([25,10],2);
       map.createPane('countryPane');
       map.getPane('countryPane').style.zIndex = 420;
-      map.createPane('pluginPane');
-      map.getPane('pluginPane').style.zIndex = 430;
+      map.createPane('marketPane');
+      map.getPane('marketPane').style.zIndex = 410;
       const tileLayers = { light:L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {maxZoom:7, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}), dark:L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:7, attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}) };
       const markers = L.layerGroup().addTo(map);
-      const pluginMarkers = L.layerGroup().addTo(map);
       const marketMarkers = L.layerGroup().addTo(map);
       const ALL_TOPICS = ['military','politics','technology','science','disaster','public-health','diplomacy','economy','general'];
       let currentTheme = localStorage.getItem(THEME_KEY) || 'dark';
@@ -135,7 +135,6 @@
       let selectedCountry = null, activeTopics = [], lastSnapshot = { avgHotness:0, tensionScore:0, heatDelta:0, tensionDelta:0, countryDelta:0, eventDelta:0 };
       let panelCollapsed = false, selectorExpanded = false;
       let tileRegistry = [...BUILTIN_TILES], tileConfig = loadTileConfig();
-      let mapMarkerPlugins = [];
       let themePlugins = [];
       let activeThemePlugin = localStorage.getItem(THEME_PLUGIN_KEY) || 'blackGreenBuiltinTheme';
       let overviewHistory = { countries:[], events:[], hotness:[], tension:[], globalEconomy:[] };
@@ -227,7 +226,7 @@
         if (!showMarkets) return;
         GLOBAL_MARKETS.forEach(item => {
           const popup = `<b>${getMarketLabel(item)}</b><br/>${getIndexLabel(item)} (${item.indexCode})<br/>${item.indexValue} (${item.indexDelta})`;
-          const marker = L.circleMarker([item.lat, item.lon], { pane:'pluginPane', radius:8, color:'#f59e0b', fillColor:'#fbbf24', fillOpacity:0.35, weight:2 });
+          const marker = L.circleMarker([item.lat, item.lon], { pane:'marketPane', radius:8, color:'#f59e0b', fillColor:'#fbbf24', fillOpacity:0.35, weight:2 });
           marker.bindPopup(popup);
           marker.addTo(marketMarkers);
         });
@@ -288,33 +287,6 @@
         select.value = activeThemePlugin;
       }
 
-      function normalizePluginMapMarker(plugin){
-        if (!plugin || !plugin.id || plugin.type !== 'map-marker') return null;
-        return {
-          id: plugin.id,
-          title: plugin.title || { zh: plugin.id, en: plugin.id },
-          markersPath: plugin.markersPath || 'hotspots.conflict_zones',
-          popupTemplate: plugin.popupTemplate || { zh:'{country}｜{event_count}条｜{intensity}分', en:'{country} | {event_count} events | {intensity} pts' },
-          color: plugin.color || '#ef4444',
-          radiusBase: Number(plugin.radiusBase || 6),
-        };
-      }
-      function renderPluginMapMarkers(context){
-        pluginMarkers.clearLayers();
-        mapMarkerPlugins.forEach(plugin => {
-          const markerItems = extractPath(context, plugin.markersPath);
-          if (!Array.isArray(markerItems)) return;
-          markerItems.forEach(item => {
-            if (typeof item?.lat !== 'number' || typeof item?.lon !== 'number') return;
-            const itemData = { ...context, ...item };
-            const radius = plugin.radiusBase + Math.max(0, Math.min(12, Number(item.intensity || 0) / 10));
-            const popup = compileTemplate(resolveTemplateText(plugin.popupTemplate, currentLang), itemData);
-            const marker = L.circleMarker([item.lat, item.lon], { pane:'pluginPane', radius, color:plugin.color, fillColor:plugin.color, fillOpacity:0.18, weight:2 });
-            marker.bindPopup(popup || plugin.id);
-            marker.addTo(pluginMarkers);
-          });
-        });
-      }
       async function resolveExternalVars(plugin, context){
         const vars = {};
         const sources = Array.isArray(plugin.externalSources) ? plugin.externalSources : [];
@@ -338,7 +310,7 @@
         return vars;
       }
       function normalizePluginTile(plugin){
-        if (!plugin || !plugin.id || !plugin.type || plugin.type === 'map-marker') return null;
+        if (!plugin || !plugin.id || !plugin.type) return null;
         return {
           id: plugin.id,
           type: plugin.type,
@@ -355,9 +327,8 @@
       }
       async function loadPluginTiles(){
         try {
-          const manifest = await fetch('/plugins/index.json').then(r => r.ok ? r.json() : { tiles: [], map_markers: [], themes: [] });
+          const manifest = await fetch('/plugins/index.json').then(r => r.ok ? r.json() : { tiles: [], themes: [] });
           const pluginTiles = [];
-          const markerPlugins = [];
           const loadedThemePlugins = [];
           for (const file of (manifest.tiles || [])) {
             try {
@@ -366,24 +337,15 @@
               if (tile) pluginTiles.push(tile);
             } catch (_err) {}
           }
-          for (const file of (manifest.map_markers || [])) {
-            try {
-              const raw = await fetch(`/plugins/${file}`).then(r => r.ok ? r.json() : null);
-              const markerPlugin = normalizePluginMapMarker(raw);
-              if (markerPlugin) markerPlugins.push(markerPlugin);
-            } catch (_err) {}
-          }
           for (const file of (manifest.themes || [])) {
             try {
               const raw = await fetch(`/plugins/${file}`).then(r => r.ok ? r.json() : null);
               if (raw && raw.id && raw.type === 'theme') loadedThemePlugins.push(raw);
             } catch (_err) {}
           }
-          mapMarkerPlugins = markerPlugins;
           themePlugins = loadedThemePlugins;
           tileRegistry = [...BUILTIN_TILES, ...pluginTiles];
         } catch (_err) {
-          mapMarkerPlugins = [];
           themePlugins = [];
           tileRegistry = [...BUILTIN_TILES];
         }
@@ -534,7 +496,6 @@
         lastSnapshot = { avgHotness:avgHotnessRaw, tensionScore, heatDelta, tensionDelta, countryDelta, eventDelta, countries: totalCountries, events: totalEvents, globalEconomy:globalEconomy.indexScore, globalEconomyDelta:globalEconomy.weightedDelta, lastRefresh:hotspots.last_refresh || '', topCountryByEvents:countries[0]?.country || '', topTopic:countries[0]?.top_topic_label || topicLabel(countries[0]?.top_topic || '') };
         renderKpis(countries, tension);
         await renderTiles(lastSnapshot);
-        renderPluginMapMarkers({ ...lastSnapshot, hotspots: hotspotsSnapshot, panel: panelSnapshot, lang: currentLang, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, markets: GLOBAL_MARKETS });
         renderMarketLayers();
 
         markers.clearLayers();
@@ -545,7 +506,6 @@
         const panel = await loadPanel(selectedCountry);
         panelSnapshot = panel || {};
         await renderTiles(lastSnapshot);
-        renderPluginMapMarkers({ ...lastSnapshot, hotspots: hotspotsSnapshot, panel: panelSnapshot, lang: currentLang, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, markets: GLOBAL_MARKETS });
         renderMarketLayers();
       }
       function rerenderStaticText(){
@@ -611,7 +571,6 @@
         applyThemePlugin(activeThemePlugin);
         initFilters();
         await renderTiles(lastSnapshot);
-        renderPluginMapMarkers({ ...lastSnapshot, hotspots: hotspotsSnapshot, panel: panelSnapshot, lang: currentLang, activeTopics: activeTopics.map(topicLabel).join(', ') || t().all, markets: GLOBAL_MARKETS });
         renderMarketLayers();
         await bootstrap();
         

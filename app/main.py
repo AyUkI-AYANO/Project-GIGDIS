@@ -1,4 +1,4 @@
-"""Project GIGDIS beta2.2 service entrypoint (stdlib HTTP server)."""
+"""Project GIGDIS beta2.3 service entrypoint (stdlib HTTP server)."""
 
 from __future__ import annotations
 
@@ -162,42 +162,6 @@ def refresh_hotspots() -> None:
     _append_tension_history(tension, events)
 
 
-def _build_conflict_zones(events: list[HotspotEvent]) -> list[dict[str, object]]:
-    military = [event for event in events if event.topic == "military" and _is_conflict_event(event)]
-    bucket: dict[str, dict[str, object]] = {}
-    for event in military:
-        if event.country not in bucket:
-            bucket[event.country] = {
-                "country": event.country,
-                "lat": event.lat,
-                "lon": event.lon,
-                "event_count": 0,
-                "avg_hotness": 0.0,
-                "headline": event.title,
-            }
-        record = bucket[event.country]
-        record["event_count"] = int(record["event_count"]) + 1
-        record["avg_hotness"] = float(record["avg_hotness"]) + event.hotness
-
-    zones: list[dict[str, object]] = []
-    for country, record in bucket.items():
-        event_count = int(record["event_count"])
-        avg_hotness = round(float(record["avg_hotness"]) / max(event_count, 1), 2)
-        zones.append(
-            {
-                "country": country,
-                "lat": record["lat"],
-                "lon": record["lon"],
-                "event_count": event_count,
-                "intensity": avg_hotness,
-                "headline": record["headline"],
-            }
-        )
-
-    result = sorted(zones, key=lambda item: (float(item["intensity"]), int(item["event_count"])), reverse=True)
-    return result[:8]
-
-
 def _is_conflict_event(event: HotspotEvent) -> bool:
     text = f"{event.title} {event.summary}".lower()
     has_conflict_keyword = any(keyword in text for keyword in CONFLICT_KEYWORDS)
@@ -285,7 +249,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(
                 {
                     "service": "Project GIGDIS",
-                    "version": "1.0-beta2.2",
+                    "version": "1.0-beta2.3",
                     "last_refresh": STATE["last_refresh"],
                     "event_count": len(STATE["events"]),
                     "limit_per_source": STATE["limit_per_source"],
@@ -317,14 +281,12 @@ class Handler(BaseHTTPRequestHandler):
                 {"timestamp": item["timestamp"], "score": item["score"]}
                 for item in tension_history
             ]
-            conflict_zones = _build_conflict_zones(filtered)
             return self._json(
                 {
                     "last_refresh": STATE["last_refresh"],
                     "active_topics": topics,
                     "lang": lang,
                     "countries": aggregate_by_country(filtered, lang=lang),
-                    "conflict_zones": conflict_zones,
                     "global_tension": {
                         "score": latest_tension["score"],
                         "top_regions": latest_tension["top_regions"],
@@ -354,7 +316,7 @@ def run() -> None:
 
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print("=" * 64, flush=True)
-    print("Project GIGDIS beta2.2 已启动", flush=True)
+    print("Project GIGDIS beta2.3 已启动", flush=True)
     print(f"服务地址: http://localhost:{PORT}", flush=True)
     print("在 PowerShell / 终端中按 Ctrl+C 可结束进程", flush=True)
     print("=" * 64, flush=True)

@@ -1,6 +1,6 @@
-# Project GIGDIS (beta2.2)
+# Project GIGDIS (beta2.3)
 
-Project GIGDIS 是一个全球热点地图系统的 beta2.2 迭代版本。
+Project GIGDIS 是一个全球热点地图系统的 beta2.3 迭代版本。
 
 
 ## Update Log
@@ -8,6 +8,12 @@ Project GIGDIS 是一个全球热点地图系统的 beta2.2 迭代版本。
 
 
 
+
+### beta2.3
+- 彻底取消冲突地图标记显示能力：前端移除 map-marker 插件加载流程，插件清单去除 `map_markers`，并删除冲突标记插件示例文件。
+- 后端热点接口不再返回 `conflict_zones` 字段，聚焦国家热点与全球紧张度主数据。
+- 继续优化 UI 流畅度：增强主题切换/卡片状态过渡动画，并为 KPI 详情展开增加轻量淡入上移动效。
+- 全量同步版本号为 `beta2.3`（服务端、前端标题/启动文案、README、插件规范）。
 
 ### beta2.2
 - 修复「数据概览」中多张卡片“展开详情”按钮纵向未对齐的问题：统一 KPI 数值区最小高度，并让按钮自动贴底对齐，保证 5 张卡片按钮在同一水平线。
@@ -123,5 +129,5 @@ python app/main.py
 
 - `GET /api/v1/health`：服务健康、版本、可用类型、当前每源抓取上限。
 - `GET /api/v1/refresh?limit_per_source=40`：手动触发一次刷新，并可指定每个信息源抓取条数（5-100）。
-- `GET /api/v1/hotspots?topics=technology,military&lang=en`：按类型筛选地图热点数据，并返回全球紧张度与冲突地区（前端暂不展示冲突区）。
+- `GET /api/v1/hotspots?topics=technology,military&lang=en`：按类型筛选地图热点数据，并返回国家热点与全球紧张度。
 - `GET /api/v1/panel?viewport_country=China&topics=politics,technology&lang=fr`：按国家+类型+语言筛选信息栏内容。
