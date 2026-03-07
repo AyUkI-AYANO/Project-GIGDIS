@@ -1,4 +1,4 @@
-"""Hotspot extraction pipeline for Project GIGDIS beta3.4."""
+"""Hotspot extraction pipeline for Project GIGDIS beta4.0."""
 
 from __future__ import annotations
 
@@ -97,6 +97,19 @@ NON_MILITARY_ATTACK_HINTS = {
     "tourist",
     "hiker",
     "killed by",
+}
+
+
+TOPIC_COLORS = {
+    "military": "#ef4444",
+    "politics": "#8b5cf6",
+    "technology": "#06b6d4",
+    "science": "#10b981",
+    "disaster": "#f97316",
+    "public-health": "#22c55e",
+    "diplomacy": "#eab308",
+    "economy": "#f59e0b",
+    "general": "#64748b",
 }
 
 PHRASE_TRANSLATIONS = {
@@ -491,10 +504,61 @@ def dedupe_events(events: Iterable[Event]) -> list[Event]:
     return sorted(unique.values(), key=lambda item: item.hotness, reverse=True)
 
 
+def _build_related_source_index(events: list[Event]) -> dict[str, dict[tuple[str, str] | str, list[Event]]]:
+    return {
+        "country_topic": _group_events(events, lambda event: (event.country, event.topic)),
+        "country": _group_events(events, lambda event: event.country),
+        "topic": _group_events(events, lambda event: event.topic),
+    }
+
+
+def _group_events(events: list[Event], key_fn) -> dict:
+    grouped: dict = {}
+    for event in events:
+        key = key_fn(event)
+        grouped.setdefault(key, []).append(event)
+    return grouped
+
+
+def _expand_sources_for_event(country: str, topic: str, existing: list[dict], related_index: dict[str, dict]) -> list[dict]:
+    seen = {str(item.get("source", "")).lower() for item in existing}
+    extras: list[dict] = []
+    candidate_pools = [
+        related_index["country_topic"].get((country, topic), []),
+        related_index["country"].get(country, []),
+        related_index["topic"].get(topic, []),
+    ]
+
+    for pool in candidate_pools:
+        for candidate in sorted(pool, key=lambda item: item.hotness, reverse=True):
+            source_name = candidate.source.lower()
+            if source_name in seen:
+                continue
+            seen.add(source_name)
+            extras.append(
+                {
+                    "source": candidate.source,
+                    "source_outlet": candidate.source_outlet,
+                    "source_type": candidate.source_type,
+                    "political_leaning": candidate.political_leaning,
+                    "political_leaning_label": candidate.political_leaning,
+                    "political_leaning_color": candidate.political_leaning_color,
+                    "published_at": candidate.published_at.isoformat(),
+                    "link": candidate.link,
+                    "hotness": candidate.hotness,
+                }
+            )
+            if len(existing) + len(extras) >= 4:
+                return existing + extras
+    return existing + extras
+
+
 def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict]:
+    event_list = list(events)
     bucket: dict[str, dict] = {}
     merged_events: dict[str, dict] = {}
-    for event in events:
+    related_source_index = _build_related_source_index(event_list)
+    for event in event_list:
         if event.country not in bucket:
             bucket[event.country] = {
                 "country": event.country,
@@ -534,6 +598,7 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
                 "hotness": event.hotness,
                 "topic": event.topic,
                 "topic_label": translate_topic(event.topic, lang),
+                "topic_color": TOPIC_COLORS.get(event.topic, "#64748b"),
                 "link": event.link,
                 "sources": [source_item],
             }
@@ -550,6 +615,8 @@ def aggregate_by_country(events: Iterable[Event], lang: str = "zh") -> list[dict
             current["link"] = event.link
 
     for event in merged_events.values():
+        event["sources"] = sorted(event["sources"], key=lambda item: item["hotness"], reverse=True)
+        event["sources"] = _expand_sources_for_event(event["country"], event["topic"], event["sources"], related_source_index)
         event["sources"] = sorted(event["sources"], key=lambda item: item["hotness"], reverse=True)
         bucket[event["country"]]["top_events"].append(event)
 
@@ -581,6 +648,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
             "hotness": item["hotness"],
             "topic": item["topic"],
             "topic_label": item["topic_label"],
+            "topic_color": item.get("topic_color", TOPIC_COLORS.get(item["topic"], "#64748b")),
             "source": item["source"],
             "source_type": item["source_type"],
             "link": item["link"],
@@ -598,6 +666,7 @@ def build_adaptive_panel(events: list[Event], viewport_country: str | None = Non
                 "hotness": item["hotness"],
                 "topic": item["topic"],
                 "topic_label": item["topic_label"],
+                "topic_color": item.get("topic_color", TOPIC_COLORS.get(item["topic"], "#64748b")),
                 "source": item["source"],
                 "source_type": item["source_type"],
                 "link": item["link"],
